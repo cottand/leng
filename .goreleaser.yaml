@@ -9,14 +9,45 @@ builds:
       - amd64
       - arm64
 dockers:
-  - image_templates: ["ghcr.io/looterz/grimd:latest"]
+  - image_templates:
+    - "ghcr.io/cottand/grimd:latest-amd64"
+    - "ghcr.io/cottand/grimd:{{ .Tag }}-amd64"
     dockerfile: docker/Dockerfile.gorelease
     build_flag_templates:
+      - --pull
+      - --platform=linux/amd64
       - --label=org.opencontainers.image.title={{ .ProjectName }}
       - --label=org.opencontainers.image.description={{ .ProjectName }}
-      - --label=org.opencontainers.image.url=https://github.com/looterz/grimd
-      - --label=org.opencontainers.image.source=https://github.com/looterz/grimd
+      - --label=org.opencontainers.image.url=https://github.com/cottand/grimd
+      - --label=org.opencontainers.image.source=https://github.com/cottand/grimd
       - --label=org.opencontainers.image.version={{ .Version }}
       - --label=org.opencontainers.image.created={{ .Date }}
       - --label=org.opencontainers.image.revision={{ .FullCommit }}
       - --label=org.opencontainers.image.licenses=MIT
+    use: buildx
+  - image_templates:
+      - "ghcr.io/cottand/grimd:latest-arm64"
+      - "ghcr.io/cottand/grimd:{{ .Tag }}-arm64"
+    dockerfile: docker/Dockerfile.gorelease
+    build_flag_templates:
+      - --pull
+      - --platform=linux/arm64
+      - --label=org.opencontainers.image.title={{ .ProjectName }}
+      - --label=org.opencontainers.image.description={{ .ProjectName }}
+      - --label=org.opencontainers.image.url=https://github.com/cottand/grimd
+      - --label=org.opencontainers.image.source=https://github.com/cottand/grimd
+      - --label=org.opencontainers.image.version={{ .Version }}
+      - --label=org.opencontainers.image.created={{ .Date }}
+      - --label=org.opencontainers.image.revision={{ .FullCommit }}
+      - --label=org.opencontainers.image.licenses=MIT
+    use: buildx
+    goarch: arm64
+docker_manifests:
+  - name_template: 'myorg/myuser:{{ .Tag }}'
+    image_templates:
+      - 'myorg/myuser:{{ .Tag }}-amd64'
+      - 'myorg/myuser:{{ .Tag }}-arm64'
+  - name_template: 'myorg/myuser:latest'
+    image_templates:
+      - 'myorg/myuser:{{ .Tag }}-amd64'
+      - 'myorg/myuser:{{ .Tag }}-arm64'
