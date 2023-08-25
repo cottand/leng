@@ -25,6 +25,7 @@ func BenchmarkResolver(b *testing.B) {
 }
 
 func TestMultipleARecords(t *testing.T) {
+	testDnsHost := "localhost:5300"
 	var config Config
 	_, err := toml.Decode(defaultConfig, &config)
 
@@ -41,7 +42,7 @@ func TestMultipleARecords(t *testing.T) {
 	close(actChannel)
 
 	server := &Server{
-		host:     "localhost:53",
+		host:     testDnsHost,
 		rTimeout: 5 * time.Second,
 		wTimeout: 5 * time.Second,
 	}
@@ -59,7 +60,7 @@ func TestMultipleARecords(t *testing.T) {
 	m := new(dns.Msg)
 	m.SetQuestion(dns.Fqdn("example.com"), dns.TypeA)
 
-	reply, _, err := c.Exchange(m, testNameserver)
+	reply, _, err := c.Exchange(m, testDnsHost)
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
