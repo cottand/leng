@@ -41,7 +41,7 @@ func TestMultipleARecords(t *testing.T) {
 	close(actChannel)
 
 	server := &Server{
-		host:     "0.0.0.0:53",
+		host:     "localhost:53",
 		rTimeout: 5 * time.Second,
 		wTimeout: 5 * time.Second,
 	}
