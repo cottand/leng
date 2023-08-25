@@ -43,11 +43,11 @@ dockers:
     use: buildx
     goarch: arm64
 docker_manifests:
-  - name_template: 'myorg/myuser:{{ .Tag }}'
+  - name_template: 'ghcr.io/cottand/grimd:{{ .Tag }}'
     image_templates:
-      - 'myorg/myuser:{{ .Tag }}-amd64'
-      - 'myorg/myuser:{{ .Tag }}-arm64'
-  - name_template: 'myorg/myuser:latest'
+      - 'ghcr.io/cottand/grimd:{{ .Tag }}-amd64'
+      - 'ghcr.io/cottand/grimd:{{ .Tag }}-arm64'
+  - name_template: 'ghcr.io/cottand/grimd:latest'
     image_templates:
-      - 'myorg/myuser:{{ .Tag }}-amd64'
-      - 'myorg/myuser:{{ .Tag }}-arm64'
+      - 'ghcr.io/cottand/grimd:{{ .Tag }}-amd64'
+      - 'ghcr.io/cottand/grimd:{{ .Tag }}-arm64'
