@@ -41,7 +41,6 @@ type Config struct {
 	CustomDNSRecords  []string
 	ToggleName        string
 	ReactivationDelay uint
-	Dashboard         bool
 	APIDebug          bool
 	DoH               string
 	UseDrbl           int
@@ -80,9 +79,6 @@ logconfig = "file:grimd.log@2,stderr@2"
 
 # apidebug enables the debug mode of the http api library
 apidebug = false
-
-# enable the web interface by default
-dashboard = true
 
 # address to bind to for the DNS server
 bind = "0.0.0.0:53"
