@@ -54,7 +54,8 @@ func TestMultipleARecords(t *testing.T) {
 	questionCache := makeQuestionCache(config.QuestionCacheCap)
 
 	server.Run(&config, blockCache, questionCache)
-	time.Sleep(100 * time.Millisecond)
+
+	time.Sleep(200 * time.Millisecond)
 	defer server.Stop()
 
 	m := new(dns.Msg)
