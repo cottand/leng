@@ -1,13 +1,4 @@
 project_name: grimd
-builds:
-  - env: [CGO_ENABLED=0]
-    goos:
-      - linux
-      - windows
-      - darwin
-    goarch:
-      - amd64
-      - arm64
 dockers:
   - image_templates:
     - "ghcr.io/cottand/grimd:latest-amd64"
@@ -51,3 +42,12 @@ docker_manifests:
     image_templates:
       - 'ghcr.io/cottand/grimd:{{ .Tag }}-amd64'
       - 'ghcr.io/cottand/grimd:{{ .Tag }}-arm64'
+builds:
+  - env: [CGO_ENABLED=0]
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64

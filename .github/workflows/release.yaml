@@ -36,7 +36,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
-      - 
+      - name: Install QEMU
+        run: sudo apt-get install qemu-user-static
+
+      -
         name: Prepare Submodule
         run: git submodule update --init
 
@@ -53,8 +56,6 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Install QEMU
-        run: sudo apt-get install qemu-user-static
       -
         name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v2
