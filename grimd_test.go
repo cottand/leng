@@ -25,7 +25,7 @@ func BenchmarkResolver(b *testing.B) {
 }
 
 func TestMultipleARecords(t *testing.T) {
-	testDnsHost := "localhost:5300"
+	testDnsHost := "127.0.0.1:5300"
 	var config Config
 	_, err := toml.Decode(defaultConfig, &config)
 
