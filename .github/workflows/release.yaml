@@ -53,6 +53,8 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install QEMU
+        run: apt-get install qemu-user-static
       -
         name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v2
