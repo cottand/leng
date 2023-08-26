@@ -30,8 +30,9 @@ func (s *Server) Run(config *Config,
 	udpHandler.HandleFunc(".", s.handler.DoUDP)
 
 	for _, record := range NewCustomDNSRecordsFromText(config.CustomDNSRecords) {
-		tcpHandler.HandleFunc(record.name, record.serve(s.handler))
-		udpHandler.HandleFunc(record.name, record.serve(s.handler))
+		dnsHandler := record.serve(s.handler)
+		tcpHandler.HandleFunc(record.name, dnsHandler)
+		udpHandler.HandleFunc(record.name, dnsHandler)
 	}
 
 	s.tcpServer = &dns.Server{Addr: s.host,
