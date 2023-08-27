@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/cottand/grimd/internal/metric"
 	"github.com/miekg/dns"
 )
 
@@ -33,12 +34,15 @@ func NewCustomDNSRecordsFromText(recordsText []string) []CustomDNSRecords {
 
 func NewCustomDNSRecords(from map[string][]dns.RR) []CustomDNSRecords {
 	var records []CustomDNSRecords
+	var total int
 	for name, rrs := range from {
 		records = append(records, CustomDNSRecords{
 			name:   name,
 			answer: rrs,
 		})
+		total += len(rrs)
 	}
+	metric.CustomRecordCount.Set(float64(total))
 	return records
 }
 
@@ -48,6 +52,7 @@ func (records CustomDNSRecords) serve(serverHandler *DNSHandler) func(dns.Respon
 		m.SetReply(req)
 		m.Answer = append(m.Answer, records.answer...)
 
+		metric.RequestCustomCounter.Inc()
 		serverHandler.WriteReplyMsg(writer, m)
 	}
 }

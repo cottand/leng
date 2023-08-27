@@ -3,9 +3,12 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"github.com/cottand/grimd/internal/metric"
+	"github.com/prometheus/client_golang/prometheus"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -17,6 +20,11 @@ import (
 type ResolvError struct {
 	qname, net  string
 	nameservers []string
+}
+
+type upstreamAnswer struct {
+	answer     *dns.Msg
+	nameserver string
 }
 
 // Error formats a ResolvError
@@ -31,17 +39,29 @@ type Resolver struct {
 }
 
 // Lookup will ask each nameserver in top-to-bottom fashion, starting a new request
-// in every second, and return as early as possbile (have an answer).
+// in every second, and return as early as possible (have an answer).
 // It returns an error if no request has succeeded.
 func (r *Resolver) Lookup(net string, req *dns.Msg, timeout int, interval int, nameServers []string, DoH string) (message *dns.Msg, err error) {
 	logger.Debugf("Lookup %s, timeout: %d, interval: %d, nameservers: %v, Using DoH: %v", net, timeout, interval, nameServers, DoH != "")
+
+	question := req.Question[0]
+
+	metricUpstreamResolveCounter, _ := metric.RequestUpstreamResolveCounter.CurryWith(prometheus.Labels{
+		"q_type": dns.Type(question.Qtype).String(),
+		"q_name": question.Name,
+	})
 
 	//Is DoH enabled
 	if DoH != "" {
 		//First try and use DOH. Privacy First
 		ans, err := r.DoHLookup(DoH, timeout, req)
 		if err == nil {
-			//No error so result is ok
+			// No error so result is ok
+			metricUpstreamResolveCounter.With(
+				prometheus.Labels{
+					"rcode":    dns.RcodeToString[ans.Rcode],
+					"upstream": DoH,
+				}).Inc()
 			return ans, nil
 		}
 
@@ -58,7 +78,7 @@ func (r *Resolver) Lookup(net string, req *dns.Msg, timeout int, interval int, n
 
 	qname := req.Question[0].Name
 
-	res := make(chan *dns.Msg, 1)
+	res := make(chan upstreamAnswer, 1)
 	var wg sync.WaitGroup
 	L := func(nameserver string) {
 		defer wg.Done()
@@ -77,7 +97,7 @@ func (r *Resolver) Lookup(net string, req *dns.Msg, timeout int, interval int, n
 			logger.Debugf("%s resolv on %s (%s)\n", UnFqdn(qname), nameserver, net)
 		}
 		select {
-		case res <- r:
+		case res <- upstreamAnswer{answer: r, nameserver: nameserver}:
 		default:
 		}
 	}
@@ -92,7 +112,7 @@ func (r *Resolver) Lookup(net string, req *dns.Msg, timeout int, interval int, n
 		// but exit early, if we have an answer
 		select {
 		case r := <-res:
-			return r, nil
+			return r.answer, nil
 		case <-ticker.C:
 			continue
 		}
@@ -102,7 +122,11 @@ func (r *Resolver) Lookup(net string, req *dns.Msg, timeout int, interval int, n
 	wg.Wait()
 	select {
 	case r := <-res:
-		return r, nil
+		metricUpstreamResolveCounter.With(prometheus.Labels{
+			"rcode":    dns.RcodeToString[r.answer.Rcode],
+			"upstream": r.nameserver,
+		}).Inc()
+		return r.answer, nil
 	default:
 		return nil, ResolvError{qname, net, nameServers}
 	}
@@ -113,9 +137,15 @@ func (r *Resolver) Timeout(timeout int) time.Duration {
 	return time.Duration(timeout) * time.Second
 }
 
-//DoHLookup performs a DNS lookup over https
-func (r *Resolver) DoHLookup(url string, timeout int, req *dns.Msg) (*dns.Msg, error) {
+// DoHLookup performs a DNS lookup over https
+func (r *Resolver) DoHLookup(url string, timeout int, req *dns.Msg) (msg *dns.Msg, err error) {
 	qname := req.Question[0].Name
+
+	defer func() {
+		metric.RequestUpstreamDohRequest.With(prometheus.Labels{
+			"success": strconv.FormatBool(err != nil),
+		})
+	}()
 
 	//Turn message into wire format
 	data, err := req.Pack()
