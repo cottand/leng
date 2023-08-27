@@ -60,3 +60,7 @@ jobs:
           platforms: linux/amd64, linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Summary
+        run: |
+          echo "Published tags: ${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
