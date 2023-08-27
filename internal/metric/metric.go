@@ -45,3 +45,11 @@ var (
 			Help:      "Upstream DoH requests - only works when DoH configured",
 		}, []string{"success"})
 )
+
+func init() {
+	prometheus.MustRegister(
+		ResponseCounter,
+		RequestUpstreamResolveCounter,
+		RequestUpstreamDohRequest,
+	)
+}
