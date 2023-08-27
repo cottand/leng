@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/cottand/grimd/internal/metric"
 	"github.com/miekg/dns"
 )
 
@@ -48,6 +49,7 @@ func (records CustomDNSRecords) serve(serverHandler *DNSHandler) func(dns.Respon
 		m.SetReply(req)
 		m.Answer = append(m.Answer, records.answer...)
 
+		metric.DNSRequestCustomCounter.Inc()
 		serverHandler.WriteReplyMsg(writer, m)
 	}
 }

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"github.com/cottand/grimd/internal/metric"
+	"github.com/prometheus/client_golang/prometheus"
 	"net"
 	"strings"
 	"sync"
@@ -314,6 +316,14 @@ func (h *DNSHandler) WriteReplyMsg(w dns.ResponseWriter, message *dns.Msg) {
 	if err != nil {
 		logger.Error(err)
 	}
+
+	question := message.Question[0]
+	metric.DNSResponseCounter.With(prometheus.Labels{
+		"remote_ip": w.RemoteAddr().String(),
+		"q_type":    dns.Type(question.Qtype).String(),
+		"q_name":    question.Name,
+		"rcode":     dns.RcodeToString[message.Rcode],
+	}).Inc()
 }
 
 func (h *DNSHandler) isIPQuery(q dns.Question) int {
