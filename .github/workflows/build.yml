@@ -1,4 +1,4 @@
-name: Release
+name: Build
 
 on:
   workflow_dispatch:
@@ -15,7 +15,7 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  build:
+  docker:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -44,7 +44,7 @@ jobs:
         with:
           push: true
           context: .
-          dockerfile: docker/slim.Dockerfile
+          file: docker/slim.Dockerfile
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64, linux/arm64, darwin/amd64, darwin/arm64
