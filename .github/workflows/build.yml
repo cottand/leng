@@ -27,6 +27,13 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
+      - name: Login to GHCR
+        uses: docker/login-action@28218f9b04b4f3f62068d7b6ce6ca5b26e35336c
+        with:
+          registry: ghcr.io
+          username: ${{ secrets.REPO_OWNER }}
+          password: ${{ secrets.GCR_TOKEN }}
+
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v4
