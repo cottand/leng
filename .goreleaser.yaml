@@ -3,7 +3,7 @@ dockers:
   - image_templates:
     - "ghcr.io/cottand/grimd:latest-amd64"
     - "ghcr.io/cottand/grimd:{{ .Tag }}-amd64"
-    dockerfile: docker/alpine.gorelease.Dockerfile
+    dockerfile: docker/gorelease.Dockerfile
     build_flag_templates:
       - --pull
       - --platform=linux/amd64
