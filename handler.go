@@ -318,7 +318,7 @@ func (h *DNSHandler) WriteReplyMsg(w dns.ResponseWriter, message *dns.Msg) {
 	}
 
 	question := message.Question[0]
-	metric.DNSResponseCounter.With(prometheus.Labels{
+	metric.ResponseCounter.With(prometheus.Labels{
 		"remote_ip": w.RemoteAddr().String(),
 		"q_type":    dns.Type(question.Qtype).String(),
 		"q_name":    question.Name,

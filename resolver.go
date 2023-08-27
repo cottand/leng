@@ -46,7 +46,7 @@ func (r *Resolver) Lookup(net string, req *dns.Msg, timeout int, interval int, n
 
 	question := req.Question[0]
 
-	metricUpstreamResolveCounter, _ := metric.DNSRequestUpstreamResolveCounter.CurryWith(prometheus.Labels{
+	metricUpstreamResolveCounter, _ := metric.RequestUpstreamResolveCounter.CurryWith(prometheus.Labels{
 		"q_type": dns.Type(question.Qtype).String(),
 		"q_name": question.Name,
 	})
@@ -142,7 +142,7 @@ func (r *Resolver) DoHLookup(url string, timeout int, req *dns.Msg) (msg *dns.Ms
 	qname := req.Question[0].Name
 
 	defer func() {
-		metric.DNSRequestUpstreamDohRequest.With(prometheus.Labels{
+		metric.RequestUpstreamDohRequest.With(prometheus.Labels{
 			"success": strconv.FormatBool(err != nil),
 		})
 	}()

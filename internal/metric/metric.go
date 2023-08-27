@@ -10,27 +10,35 @@ const (
 )
 
 var (
-	DNSRequestCustomCounter = promauto.NewCounter(prometheus.CounterOpts{
+	CustomRecordCount = promauto.NewGauge(
+		prometheus.GaugeOpts{
+			Namespace: Namespace,
+			Name:      "custom_records",
+			Help:      "Amount of custom resource records configured at startup",
+		},
+	)
+
+	RequestCustomCounter = promauto.NewCounter(prometheus.CounterOpts{
 		Namespace: Namespace,
 		Name:      "request_custom",
 		Help:      "Served custom DNS requests",
 	})
 
-	DNSResponseCounter = prometheus.NewCounterVec(
+	ResponseCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: Namespace,
 			Name:      "request_total",
 			Help:      "Served DNS replies",
 		}, []string{"q_type", "remote_ip", "q_name", "rcode"})
 
-	DNSRequestUpstreamResolveCounter = prometheus.NewCounterVec(
+	RequestUpstreamResolveCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: Namespace,
 			Name:      "upstream_request",
 			Help:      "Upstream DNS requests",
 		}, []string{"q_type", "q_name", "rcode", "upstream"})
 
-	DNSRequestUpstreamDohRequest = prometheus.NewCounterVec(
+	RequestUpstreamDohRequest = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: Namespace,
 			Name:      "upstream_request_doh",
