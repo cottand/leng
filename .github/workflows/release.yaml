@@ -62,11 +62,3 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Release master
-        run: |
-          set -e
-          
-          $SHA=$(git rev-parse --short HEAD)
-          docker buildx 
-          
