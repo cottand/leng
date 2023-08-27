@@ -10,8 +10,8 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
     go mod tidy
 #RUN go test -v ./...
 ENV CGO_ENABLED=0
-RUN go --mount=type=cache,target=/go/pkg/mod/ \
-    build -ldflags "-w -s" -v -o main
+RUN --mount=type=cache,target=/go/pkg/mod/ \
+    go build -ldflags "-w -s" -v -o main
 RUN upx -9 -o main.minify main && mv main.minify main
 
 FROM  alpine:3.17

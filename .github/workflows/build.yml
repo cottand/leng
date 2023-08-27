@@ -67,4 +67,4 @@ jobs:
 
       - name: Summary
         run: |
-          echo "Published tags: ${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
+          echo "Published: \`${{ steps.meta.outputs.tags }}\`" >> $GITHUB_STEP_SUMMARY
