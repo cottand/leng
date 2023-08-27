@@ -1,7 +1,7 @@
 # grimd
 [![Go Report Card](https://goreportcard.com/badge/github.com/cottand/grimd?style=flat-square)](https://goreportcard.com/report/github.com/cottand/grimd)
 [![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg?style=flat-square)](http://godoc.org/github.com/cottand/grimd)
-[![Release](https://github.com/cottand/grimd/actions/workflows/release.yaml/badge.svg)](https://github.com/looterz/cottand/releases)
+[![Release](https://github.com/cottand/grimd/actions/workflows/release.yaml/badge.svg)](https://github.com/cottand/grimd/releases)
 
 :zap: Fast dns proxy, built to black-hole internet advertisements and malware servers. Capable of custom DNS.
 
