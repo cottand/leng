@@ -318,8 +318,9 @@ func (h *DNSHandler) WriteReplyMsg(w dns.ResponseWriter, message *dns.Msg) {
 	}
 
 	question := message.Question[0]
+	remoteHost, _, _ := net.SplitHostPort(w.RemoteAddr().String())
 	metric.ResponseCounter.With(prometheus.Labels{
-		"remote_ip": w.RemoteAddr().String(),
+		"remote_ip": remoteHost,
 		"q_type":    dns.Type(question.Qtype).String(),
 		"q_name":    question.Name,
 		"rcode":     dns.RcodeToString[message.Rcode],
