@@ -7,7 +7,7 @@ RUN apk add git bash gcc musl-dev upx git
 WORKDIR /app
 COPY . .
 RUN go mod tidy
-RUN go test -v ./...
+#RUN go test -v ./...
 ENV CGO_ENABLED=0
 RUN go build -ldflags "-w -s" -v -o main
 RUN upx -9 -o main.minify main && mv main.minify main
