@@ -1,7 +1,9 @@
 FROM alpine:3.17 as certs
 RUN apk --update add ca-certificates
 
-FROM golang:1.21.0-alpine3.17 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.21.0-alpine3.17 AS builder
+ARG TARGETARCH
+
 RUN apk add git bash gcc musl-dev upx git
 WORKDIR /app
 COPY . .
