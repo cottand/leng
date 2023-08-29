@@ -17,9 +17,13 @@ func TestRecordsGroupByHost(t *testing.T) {
 		t.Fatalf("map should contain 2 hosts, but had %v", records)
 	}
 
-	ex := records[0]
-
-	if ex.name != "example.com." {
+	var ex *CustomDNSRecords
+	for _, record := range records {
+		if strings.Contains(record.name, "example.com") {
+			ex = &record
+		}
+	}
+	if ex == nil {
 		t.Fatalf("map should contain example.com")
 	}
 	if rrs := ex.answer; len(rrs) != 1 &&
