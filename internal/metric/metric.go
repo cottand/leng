@@ -1,8 +1,11 @@
 package metric
 
 import (
+	"github.com/miekg/dns"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"net"
+	"strconv"
 )
 
 const (
@@ -24,12 +27,12 @@ var (
 		Help:      "Served custom DNS requests",
 	})
 
-	ResponseCounter = prometheus.NewCounterVec(
+	responseCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: Namespace,
 			Name:      "request_total",
 			Help:      "Served DNS replies",
-		}, []string{"q_type", "remote_ip", "q_name", "rcode"})
+		}, []string{"q_type", "remote_ip", "q_name", "rcode", "blocked"})
 
 	RequestUpstreamResolveCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -48,8 +51,20 @@ var (
 
 func init() {
 	prometheus.MustRegister(
-		ResponseCounter,
+		responseCounter,
 		RequestUpstreamResolveCounter,
 		RequestUpstreamDohRequest,
 	)
+}
+
+func ReportDNSResponse(w dns.ResponseWriter, message *dns.Msg, blocked bool) {
+	question := message.Question[0]
+	remoteHost, _, _ := net.SplitHostPort(w.RemoteAddr().String())
+	responseCounter.With(prometheus.Labels{
+		"remote_ip": remoteHost,
+		"q_type":    dns.Type(question.Qtype).String(),
+		"q_name":    question.Name,
+		"rcode":     dns.RcodeToString[message.Rcode],
+		"blocked":   strconv.FormatBool(blocked),
+	}).Inc()
 }
