@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/cottand/grimd/internal/metric"
-	"github.com/prometheus/client_golang/prometheus"
 	"net"
 	"strings"
 	"sync"
@@ -147,6 +146,7 @@ func (h *DNSHandler) do(config *Config, blockCache *MemoryBlockCache, questionCa
 						msg := *mesg
 						msg.Id = req.Id
 						h.WriteReplyMsg(w, &msg)
+						metric.ReportDNSResponse(w, &msg, blocked)
 						return
 					}
 				}
@@ -199,6 +199,7 @@ func (h *DNSHandler) do(config *Config, blockCache *MemoryBlockCache, questionCa
 					}
 
 					h.WriteReplyMsg(w, m)
+					metric.ReportDNSResponse(w, m, true)
 
 					logger.Noticef("%s found in blocklist\n", Q.Qname)
 
@@ -263,6 +264,7 @@ func (h *DNSHandler) do(config *Config, blockCache *MemoryBlockCache, questionCa
 			}
 
 			h.WriteReplyMsg(w, mesg)
+			metric.ReportDNSResponse(w, mesg, false)
 
 			if IPQuery > 0 && len(mesg.Answer) > 0 {
 				if !grimdActive && blacklisted {
@@ -302,6 +304,7 @@ func (h *DNSHandler) HandleFailed(w dns.ResponseWriter, message *dns.Msg) {
 	m := new(dns.Msg)
 	m.SetRcode(message, dns.RcodeServerFailure)
 	h.WriteReplyMsg(w, m)
+	metric.ReportDNSResponse(w, m, false)
 }
 
 // WriteReplyMsg writes the dns reply
@@ -317,14 +320,6 @@ func (h *DNSHandler) WriteReplyMsg(w dns.ResponseWriter, message *dns.Msg) {
 		logger.Error(err)
 	}
 
-	question := message.Question[0]
-	remoteHost, _, _ := net.SplitHostPort(w.RemoteAddr().String())
-	metric.ResponseCounter.With(prometheus.Labels{
-		"remote_ip": remoteHost,
-		"q_type":    dns.Type(question.Qtype).String(),
-		"q_name":    question.Name,
-		"rcode":     dns.RcodeToString[message.Rcode],
-	}).Inc()
 }
 
 func (h *DNSHandler) isIPQuery(q dns.Question) int {
