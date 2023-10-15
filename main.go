@@ -107,7 +107,7 @@ func main() {
 	}
 
 	sig := make(chan os.Signal)
-	signal.Notify(sig, os.Interrupt, syscall.SIGHUP)
+	signal.Notify(sig, os.Interrupt, syscall.SIGHUP, syscall.SIGUSR1)
 
 forever:
 	for {
@@ -119,11 +119,13 @@ forever:
 				quitActivation <- true
 				break forever
 			case syscall.SIGHUP:
-				logger.Error("SIGHUP received: rotating logs and reloading config\n")
+				logger.Error("SIGHUP received: rotating logs\n")
 				err := loggingState.reopen()
 				if err != nil {
 					logger.Error(err)
 				}
+			case syscall.SIGUSR1:
+				logger.Error("SIGUSR1 received: reloading config\n")
 				reloadConfigFromFile(server)
 			}
 		case <-reloadChan:
