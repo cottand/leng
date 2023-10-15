@@ -125,7 +125,7 @@ forever:
 					logger.Error(err)
 				}
 			case syscall.SIGUSR1:
-				logger.Error("SIGUSR1 received: reloading config\n")
+				logger.Info("SIGUSR1 received: reloading config\n")
 				reloadConfigFromFile(server)
 			}
 		case <-reloadChan:
