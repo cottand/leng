@@ -26,3 +26,15 @@ func difference[T comparable](a, b []T) (diff []T) {
 	}
 	return
 }
+
+func testEq[Type comparable](a, b []Type) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}

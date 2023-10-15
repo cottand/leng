@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/cottand/grimd/internal/metric"
 	"time"
 
 	"github.com/miekg/dns"
@@ -106,6 +107,12 @@ func (s *Server) ReloadConfig(config *Config) {
 	for _, r := range newRecords {
 		newRecordsPatterns = append(newRecordsPatterns, r.name)
 	}
+	if testEq(oldRecords, newRecordsPatterns) {
+		// no changes - nothing to reload
+		return
+	}
+	defer metric.CustomDNSConfigReload.Inc()
+
 	deletedRecords := difference(oldRecords, newRecordsPatterns)
 
 	for _, deleted := range deletedRecords {

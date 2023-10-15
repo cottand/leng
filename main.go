@@ -119,11 +119,12 @@ forever:
 				quitActivation <- true
 				break forever
 			case syscall.SIGHUP:
-				logger.Error("SIGHUP received: rotating logs\n")
+				logger.Error("SIGHUP received: rotating logs and reloading config\n")
 				err := loggingState.reopen()
 				if err != nil {
 					logger.Error(err)
 				}
+				reloadConfigFromFile(server)
 			}
 		case <-reloadChan:
 			blockCache, apiServer, err = reloadBlockCache(config, blockCache, questionCache, drblPeers, apiServer, server, reloadChan)
@@ -142,4 +143,12 @@ func init() {
 	flag.BoolVar(&forceUpdate, "update", false, "force an update of the blocklist database")
 
 	runtime.GOMAXPROCS(runtime.NumCPU())
+}
+
+func reloadConfigFromFile(s *Server) {
+	config, err := LoadConfig(configPath)
+	if err != nil {
+		logger.Errorf("Failed to reload config %v", err)
+	}
+	s.ReloadConfig(config)
 }
