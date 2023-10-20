@@ -76,8 +76,8 @@ You can find examples of different daemon scripts for grimd on the [wiki](https:
 These are some of the things I would like to contribute in this fork:
 - [x] ~~ARM64 Docker builds~~
 - [ ] Better custom DNS support
-  - [x] Dynamic config reload for custom DNS issue#16
-  - [x] Fix multi-record responses issue#5
+  - [x] ~~Dynamic config reload for custom DNS issue#16~~
+  - [x] ~~Fix multi-record responses issue#5~~
   - [ ] DNS record flattening issue#1
   - [ ] Service discovery integrations? issue#4
 - [ ] Prometheus metrics exporter issue#3
