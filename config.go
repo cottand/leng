@@ -2,21 +2,17 @@ package main
 
 import (
 	"fmt"
-	"io"
-	"log"
-	"os"
-	"path/filepath"
-	"strings"
-
 	"github.com/BurntSushi/toml"
 	"github.com/jonboulle/clockwork"
+	"log"
+	"os"
 )
 
 // BuildVersion returns the build version of grimd, this should be incremented every new release
-var BuildVersion = "1.0.7"
+var BuildVersion = "2.2.1"
 
 // ConfigVersion returns the version of grimd, this should be incremented every time the config changes so grimd presents a warning
-var ConfigVersion = "1.0.9"
+var ConfigVersion = "2.2.1"
 
 // Config holds the configuration parameters
 type Config struct {
@@ -50,22 +46,23 @@ type Config struct {
 	DrblDebug         int
 }
 
-var defaultConfig = `# version this config was generated from
+var defaultConfig = `
+# version this config was generated from
 version = "%s"
 
 # list of sources to pull blocklists from, stores them in ./sources
 sources = [
-"https://mirror1.malwaredomains.com/files/justdomains",
-"https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts",
-"https://sysctl.org/cameleon/hosts",
-"https://s3.amazonaws.com/lists.disconnect.me/simple_tracking.txt",
-"https://s3.amazonaws.com/lists.disconnect.me/simple_ad.txt",
-"https://gitlab.com/quidsup/notrack-blocklists/raw/master/notrack-blocklist.txt"
+	"https://mirror1.malwaredomains.com/files/justdomains",
+	"https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts",
+	"https://sysctl.org/cameleon/hosts",
+	"https://s3.amazonaws.com/lists.disconnect.me/simple_tracking.txt",
+	"https://s3.amazonaws.com/lists.disconnect.me/simple_ad.txt",
+	"https://gitlab.com/quidsup/notrack-blocklists/raw/master/notrack-blocklist.txt"
 ]
 
 # list of locations to recursively read blocklists from (warning, every file found is assumed to be a hosts-file or domain list)
 sourcedirs = [
-"sources"
+	"sources"
 ]
 
 # log configuration
@@ -75,7 +72,7 @@ sourcedirs = [
 #   syslog@<loglevel>
 # loglevel: 0 = errors and important operations, 1 = dns queries, 2 = debug
 # e.g. logconfig = "file:grimd.log@2,syslog@1,stderr@2"
-logconfig = "file:grimd.log@2,stderr@2"
+logconfig = "stderr@2"
 
 # apidebug enables the debug mode of the http api library
 apidebug = false
@@ -123,14 +120,17 @@ drblblockweight = 128
 drbltimeout = 30
 drbldebug = 0
 
-# manual whitelist entries
+# manual whitelist entries - comments for reference
 whitelist = [
-	"getsentry.com",
-	"www.getsentry.com"
+	# "getsentry.com",
+	# "www.getsentry.com"
 ]
 
-# manual custom dns entries
-customdnsrecords = []
+# manual custom dns entries - comments for reference
+customdnsrecords = [
+    # "example.mywebsite.tld      IN A       10.0.0.1"
+    # "example.other.tld          IN CNAME   wikipedia.org"
+]
 
 # When this string is queried, toggle grimd on and off
 togglename = ""
@@ -143,18 +143,29 @@ reactivationdelay = 300
 DoH = "https://cloudflare-dns.com/dns-query"
 `
 
+func parseDefaultConfig() Config {
+	var config Config
+
+	_, err := toml.Decode(defaultConfig, &config)
+	if err != nil {
+		logger.Fatalf("There was an error parsing the default config %v", err)
+	}
+	config.Version = ConfigVersion
+
+	return config
+}
+
 // WallClock is the wall clock
 var WallClock = clockwork.NewRealClock()
 
 // LoadConfig loads the given config file
 func LoadConfig(path string) (*Config, error) {
 
-	var config Config
+	var config = parseDefaultConfig()
 
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		if err := generateConfig(path); err != nil {
-			return nil, err
-		}
+		log.Printf("warning, config not found - using defaults")
+		return &config, nil
 	}
 
 	if _, err := toml.DecodeFile(path, &config); err != nil {
@@ -172,28 +183,4 @@ func LoadConfig(path string) (*Config, error) {
 	}
 
 	return &config, nil
-}
-
-func generateConfig(path string) error {
-	output, err := os.Create(path)
-	if err != nil {
-		return fmt.Errorf("could not generate config: %s", err)
-	}
-
-	defer func() {
-		if err := output.Close(); err != nil {
-			logger.Criticalf("Error closing file: %s\n", err)
-		}
-	}()
-
-	r := strings.NewReader(fmt.Sprintf(defaultConfig, ConfigVersion))
-	if _, err := io.Copy(output, r); err != nil {
-		return fmt.Errorf("could not copy default config: %s", err)
-	}
-
-	if abs, err := filepath.Abs(path); err == nil {
-		log.Printf("generated default config %s\n", abs)
-	}
-
-	return nil
 }

@@ -141,7 +141,7 @@ forever:
 }
 
 func init() {
-	flag.StringVar(&configPath, "config", "grimd.toml", "location of the config file, if not found it will be generated (default grimd.toml)")
+	flag.StringVar(&configPath, "config", "grimd.toml", "location of the config file")
 	flag.BoolVar(&forceUpdate, "update", false, "force an update of the blocklist database")
 
 	runtime.GOMAXPROCS(runtime.NumCPU())

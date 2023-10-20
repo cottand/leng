@@ -6,7 +6,6 @@ import (
 	"github.com/cottand/grimd/internal/metric"
 	"github.com/prometheus/client_golang/prometheus"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
@@ -182,7 +181,7 @@ func (r *Resolver) DoHLookup(url string, timeout int, req *dns.Msg) (msg *dns.Ms
 	}
 
 	//Unpack the message from the HTTPS response
-	respPacket, err := ioutil.ReadAll(resp.Body)
+	respPacket, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, ResolvError{qname, "HTTPS", []string{url}}
 	}
