@@ -107,12 +107,7 @@ func main() {
 	}
 
 	sig := make(chan os.Signal)
-	switch runtime.GOOS {
-	case "windows":
-		signal.Notify(sig, os.Interrupt)
-	default:
-		signal.Notify(sig, os.Interrupt, unix.SIGHUP, unix.SIGUSR1)
-	}
+	signal.Notify(sig, os.Interrupt, unix.SIGHUP, unix.SIGUSR1)
 
 forever:
 	for {
