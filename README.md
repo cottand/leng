@@ -27,7 +27,23 @@ docker-compose up -d
 
 # Configuration
 
-See [the wiki](https://github.com/Cottand/grimd/wiki/Configuration)
+By default, grimd binds DNS to `0.0.0.0:53` and loads a few known blocklists. No configuration
+is required.
+
+See [the wiki](https://github.com/Cottand/grimd/wiki/Configuration) for the full config, including defaults and dynamic config reloading.
+
+### CLI Flags
+
+```bash
+$ grimd -help
+
+Usage of grimd:
+  -config string
+    	location of the config file (default "grimd.toml")
+  -update
+    	force an update of the blocklist database
+
+```
 
 # Building
 Requires golang 1.7 or higher, you build grimd like any other golang application, for example to build for linux x64

@@ -143,12 +143,12 @@ reactivationdelay = 300
 DoH = "https://cloudflare-dns.com/dns-query"
 `
 
-func DefaultConfig() Config {
+func parseDefaultConfig() Config {
 	var config Config
 
-	_, err := toml.Decode(defaultConfig, config)
+	_, err := toml.Decode(defaultConfig, &config)
 	if err != nil {
-		panic(-1)
+		logger.Fatalf("There was an error parsing the default config %v", err)
 	}
 	config.Version = ConfigVersion
 
@@ -161,7 +161,7 @@ var WallClock = clockwork.NewRealClock()
 // LoadConfig loads the given config file
 func LoadConfig(path string) (*Config, error) {
 
-	var config Config = DefaultConfig()
+	var config = parseDefaultConfig()
 
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		log.Printf("warning, config not found - using defaults")
