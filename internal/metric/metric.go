@@ -17,7 +17,7 @@ var (
 		prometheus.GaugeOpts{
 			Namespace: Namespace,
 			Name:      "custom_records",
-			Help:      "Amount of custom resource records configured at startup",
+			Help:      "Amount of custom resource records configured in config",
 		},
 	)
 
@@ -47,6 +47,12 @@ var (
 			Name:      "upstream_request_doh",
 			Help:      "Upstream DoH requests - only works when DoH configured",
 		}, []string{"success"})
+	CustomDNSConfigReload = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Namespace: Namespace,
+			Name:      "config_reload_customdns",
+			Help:      "Custom DNS config reloads",
+		})
 )
 
 func init() {

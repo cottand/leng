@@ -107,7 +107,7 @@ func main() {
 	}
 
 	sig := make(chan os.Signal)
-	signal.Notify(sig, os.Interrupt, syscall.SIGHUP)
+	signal.Notify(sig, os.Interrupt, syscall.SIGHUP, syscall.SIGUSR1)
 
 forever:
 	for {
@@ -124,6 +124,9 @@ forever:
 				if err != nil {
 					logger.Error(err)
 				}
+			case syscall.SIGUSR1:
+				logger.Info("SIGUSR1 received: reloading config\n")
+				reloadConfigFromFile(server)
 			}
 		case <-reloadChan:
 			blockCache, apiServer, err = reloadBlockCache(config, blockCache, questionCache, drblPeers, apiServer, server, reloadChan)
@@ -142,4 +145,12 @@ func init() {
 	flag.BoolVar(&forceUpdate, "update", false, "force an update of the blocklist database")
 
 	runtime.GOMAXPROCS(runtime.NumCPU())
+}
+
+func reloadConfigFromFile(s *Server) {
+	config, err := LoadConfig(configPath)
+	if err != nil {
+		logger.Errorf("Failed to reload config %v", err)
+	}
+	s.ReloadConfig(config)
 }
