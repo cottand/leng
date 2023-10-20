@@ -27,9 +27,7 @@ docker-compose up -d
 
 # Configuration
 
-By default, grimd binds DNS to `0.0.0.0:53` and loads a few known blocklists. No configuration
-is required.
-
+By default, grimd binds DNS to `0.0.0.0:53` and loads a few known blocklists. The default settings should be enough for most.
 See [the wiki](https://github.com/Cottand/grimd/wiki/Configuration) for the full config, including defaults and dynamic config reloading.
 
 ### CLI Flags
