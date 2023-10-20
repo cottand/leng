@@ -37,8 +37,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
-      - name: Install QEMU
-        run: sudo apt-get install qemu-user-static
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
 
       - name: Tests
         run: |
