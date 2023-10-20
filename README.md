@@ -49,31 +49,22 @@ By default, if the program runs in a docker, it will automatically replace `127.
 curl -H "Accept: application/json" http://127.0.0.1:55006/application/active
 ```
 
-# Web API
-A restful json api is exposed by default on the local interface, allowing you to build web applications that visualize requests, blocks and the cache. [reaper](https://github.com/looterz/reaper) is the default grimd web frontend.
-
-
-If you want to enable the default dashboard, make sure the configuration file contains the following:
-
-```toml
-dashboard = true
-```
-
-![reaper-example](http://i.imgur.com/oXLtqSz.png)
-
 # Speed
 Incoming requests spawn a goroutine and are served concurrently, and the block cache resides in-memory to allow for rapid lookups, while answered queries are cached allowing grimd to serve thousands of queries at once while maintaining a memory footprint of under 15mb for 100,000 blocked domains!
 
 # Daemonize
 You can find examples of different daemon scripts for grimd on the [wiki](https://github.com/looterz/grimd/wiki/Daemon-Scripts).
 
-# TODO - objectives 
+# Objectives 
 
 These are some of the things I would like to contribute in this fork:
 - [x] ~~ARM64 Docker builds~~
-- [ ] Better custom DNS support (DNS flattening #1, multiple records #5 )
-    - [ ] Service discovery integrations # 4
-- [ ] Prometheus metrics exporter #3
+- [ ] Better custom DNS support
+  - [x] Dynamic config reload for custom DNS issue#16
+  - [x] Fix multi-record responses issue#5
+  - [ ] DNS record flattening issue#1
+  - [ ] Service discovery integrations? issue#4
+- [ ] Prometheus metrics exporter issue#3
 - [ ] DNS over HTTPS #2
 - [ ] Add lots of docs
 
