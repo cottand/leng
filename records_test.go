@@ -32,9 +32,14 @@ func TestRecordsGroupByHost(t *testing.T) {
 		t.Fatalf("should have 1 answer -> 10.10.0.1, but had %v", rrs)
 	}
 
-	boo := records[1]
+	var boo *CustomDNSRecords
+	for _, record := range records {
+		if strings.Contains(record.name, "boo.org") {
+			boo = &record
+		}
+	}
 
-	if boo.name != "boo.org." {
+	if boo == nil {
 		t.Fatalf("map should contain boo.org, but is %v", boo.name)
 	}
 	if rrs := ex.answer; len(rrs) != 2 &&

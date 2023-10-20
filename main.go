@@ -3,12 +3,12 @@ package main
 import (
 	"context"
 	"flag"
+	"golang.org/x/sys/unix"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"runtime"
-	"syscall"
 	"time"
 
 	"github.com/elico/drbl-peer"
@@ -107,7 +107,12 @@ func main() {
 	}
 
 	sig := make(chan os.Signal)
-	signal.Notify(sig, os.Interrupt, syscall.SIGHUP, syscall.SIGUSR1)
+	switch runtime.GOOS {
+	case "windows":
+		signal.Notify(sig, os.Interrupt)
+	default:
+		signal.Notify(sig, os.Interrupt, unix.SIGHUP, unix.SIGUSR1)
+	}
 
 forever:
 	for {
@@ -118,13 +123,13 @@ forever:
 				logger.Error("SIGINT received, stopping\n")
 				quitActivation <- true
 				break forever
-			case syscall.SIGHUP:
+			case unix.SIGHUP:
 				logger.Error("SIGHUP received: rotating logs\n")
 				err := loggingState.reopen()
 				if err != nil {
 					logger.Error(err)
 				}
-			case syscall.SIGUSR1:
+			case unix.SIGUSR1:
 				logger.Info("SIGUSR1 received: reloading config\n")
 				reloadConfigFromFile(server)
 			}
