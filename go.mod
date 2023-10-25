@@ -1,4 +1,4 @@
-module github.com/cottand/grimd
+module github.com/cottand/grimd/v2
 
 require (
 	github.com/BurntSushi/toml v1.2.1
