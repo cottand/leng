@@ -2,7 +2,6 @@ module github.com/cottand/grimd
 
 require (
 	github.com/BurntSushi/toml v1.2.1
-	github.com/elico/drbl-peer v0.0.0-20190202055151-d5a0a95c4b84
 	github.com/gin-gonic/gin v1.9.1
 	github.com/jonboulle/clockwork v0.3.0
 	github.com/miekg/dns v1.1.50
@@ -14,13 +13,11 @@ require (
 )
 
 require (
-	github.com/asaskevich/govalidator v0.0.0-20180720115003-f9ffefc3facf // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bytedance/sonic v1.9.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/elico/dns_resolver v0.0.0-20170210091832-f1a4068131f1 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
@@ -52,7 +49,6 @@ require (
 	golang.org/x/text v0.9.0 // indirect
 	golang.org/x/tools v0.6.0 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
