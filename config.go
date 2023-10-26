@@ -39,11 +39,6 @@ type Config struct {
 	ReactivationDelay uint
 	APIDebug          bool
 	DoH               string
-	UseDrbl           int
-	DrblPeersFilename string
-	DrblBlockWeight   int64
-	DrblTimeout       int
-	DrblDebug         int
 	Metrics           Metrics `toml:"metrics"`
 }
 
@@ -118,13 +113,6 @@ questioncachecap = 5000
 
 # manual blocklist entries
 blocklist = []
-
-# Drbl related settings
-usedrbl = 0
-drblpeersfilename = "drblpeers.yaml"
-drblblockweight = 128
-drbltimeout = 30
-drbldebug = 0
 
 # manual whitelist entries - comments for reference
 whitelist = [
