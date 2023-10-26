@@ -1,7 +1,6 @@
 module github.com/cottand/grimd
 
 require (
-	github.com/BurntSushi/toml v1.2.1
 	github.com/elico/drbl-peer v0.0.0-20190202055151-d5a0a95c4b84
 	github.com/gin-gonic/gin v1.9.1
 	github.com/jonboulle/clockwork v0.3.0

@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/BurntSushi/toml"
+	"github.com/pelletier/go-toml/v2"
 	"strings"
 	"testing"
 	"time"
@@ -29,7 +29,7 @@ func BenchmarkResolver(b *testing.B) {
 func integrationTest(changeConfig func(c *Config), test func(client *dns.Client, target string)) {
 	testDnsHost := "127.0.0.1:5300"
 	var config Config
-	_, _ = toml.Decode(defaultConfig, &config)
+	_ = toml.Unmarshal([]byte(defaultConfig), &config)
 
 	changeConfig(&config)
 
@@ -151,7 +151,7 @@ func Test2in3DifferentARecords(t *testing.T) {
 func TestConfigReloadForCustomRecords(t *testing.T) {
 	testDnsHost := "127.0.0.1:5300"
 	var config Config
-	_, _ = toml.Decode(defaultConfig, &config)
+	_ = toml.Unmarshal([]byte(defaultConfig), &config)
 
 	config.CustomDNSRecords = []string{
 		// custom TLD so that we do not fall back to querying upstream DNS if missing
