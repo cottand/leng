@@ -53,7 +53,10 @@ func StartAPIServer(config *Config,
 
 	router.Use(cors.Default())
 
-	router.GET("/metrics", gin.WrapH(promhttp.Handler()))
+	if config.Metrics.Enabled {
+		path := config.Metrics.Path
+		router.GET(path, gin.WrapH(promhttp.Handler()))
+	}
 
 	router.GET("/blockcache", func(c *gin.Context) {
 		special := make([]string, 0, len(blockCache.Special))

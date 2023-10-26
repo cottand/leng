@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/BurntSushi/toml"
 	"github.com/jonboulle/clockwork"
+	"github.com/pelletier/go-toml/v2"
 	"log"
 	"os"
 )
@@ -44,6 +44,12 @@ type Config struct {
 	DrblBlockWeight   int64
 	DrblTimeout       int
 	DrblDebug         int
+	Metrics           Metrics `toml:"metrics"`
+}
+
+type Metrics struct {
+	Enabled bool
+	Path    string
 }
 
 var defaultConfig = `
@@ -141,12 +147,17 @@ reactivationdelay = 300
 
 #Dns over HTTPS provider to use.
 DoH = "https://cloudflare-dns.com/dns-query"
+
+# Prometheus metrics - enable 
+[Metrics]
+  enabled = false
+  path = "/metrics"
 `
 
 func parseDefaultConfig() Config {
 	var config Config
 
-	_, err := toml.Decode(defaultConfig, &config)
+	err := toml.Unmarshal([]byte(defaultConfig), &config)
 	if err != nil {
 		logger.Fatalf("There was an error parsing the default config %v", err)
 	}
@@ -168,7 +179,7 @@ func LoadConfig(path string) (*Config, error) {
 		return &config, nil
 	}
 
-	if _, err := toml.DecodeFile(path, &config); err != nil {
+	if err := toml.Unmarshal([]byte(path), &config); err != nil {
 		return nil, fmt.Errorf("could not load config: %s", err)
 	}
 
