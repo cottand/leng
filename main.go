@@ -4,14 +4,11 @@ import (
 	"context"
 	"flag"
 	"golang.org/x/sys/unix"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"runtime"
 	"time"
-
-	"github.com/elico/drbl-peer"
 )
 
 var (
@@ -19,13 +16,11 @@ var (
 	forceUpdate     bool
 	grimdActive     bool
 	grimdActivation *ActivationHandler
-	drblPeers       *drblpeer.DrblPeers
 )
 
 func reloadBlockCache(config *Config,
 	blockCache *MemoryBlockCache,
 	questionCache *MemoryQuestionCache,
-	drblPeers *drblpeer.DrblPeers,
 	apiServer *http.Server,
 	server *Server,
 	reloadChan chan bool) (*MemoryBlockCache, *http.Server, error) {
@@ -43,15 +38,6 @@ func reloadBlockCache(config *Config,
 	if err != nil {
 		logger.Fatal(err)
 		return nil, nil, err
-	}
-
-	if config.UseDrbl > 0 {
-		drblPeers, _ = drblpeer.NewPeerListFromYamlFile(config.DrblPeersFilename, config.DrblBlockWeight, config.DrblTimeout, config.DrblDebug > 0)
-		if config.DrblDebug > 0 {
-			log.Println("Drbl Debug is ON")
-			drblPeers.Debug = true
-			log.Println("Drbl Debug is ON", drblPeers.Debug)
-		}
 	}
 
 	return blockCache, apiServer, nil
@@ -100,7 +86,7 @@ func main() {
 
 	var apiServer *http.Server
 	// Load the block cache, restart the server with the new context
-	blockCache, apiServer, err = reloadBlockCache(config, blockCache, questionCache, drblPeers, apiServer, server, reloadChan)
+	blockCache, apiServer, err = reloadBlockCache(config, blockCache, questionCache, apiServer, server, reloadChan)
 
 	if err != nil {
 		logger.Fatalf("Cannot start the API server %s", err)
@@ -129,7 +115,7 @@ forever:
 				reloadConfigFromFile(server)
 			}
 		case <-reloadChan:
-			blockCache, apiServer, err = reloadBlockCache(config, blockCache, questionCache, drblPeers, apiServer, server, reloadChan)
+			blockCache, apiServer, err = reloadBlockCache(config, blockCache, questionCache, apiServer, server, reloadChan)
 			if err != nil {
 				logger.Fatalf("Cannot start the API server %s", err)
 			}
