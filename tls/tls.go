@@ -38,7 +38,7 @@ func NewTLSConfig(certPath, keyPath, caPath string) (*tls.Config, error) {
 		return nil, err
 	}
 
-	tlsConfig := &tls.Config{Certificates: []tls.Certificate{cert}, RootCAs: roots}
+	tlsConfig := &tls.Config{Certificates: []tls.Certificate{cert}, RootCAs: roots, MinVersion: tls.VersionTLS12}
 	setTLSDefaults(tlsConfig)
 
 	return tlsConfig, nil
