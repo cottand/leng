@@ -16,7 +16,7 @@ func dnsAQuestion(question string) (msg *dns.Msg) {
 
 func TestDohHappyPath(t *testing.T) {
 	handler := dns.NewServeMux()
-	custom := NewCustomDNSRecordsFromText([]string{"example.com A 10.0.0.0"})
+	custom := NewCustomDNSRecordsFromText([]string{"example.com.   IN A   10.0.0.0 "})
 	handler.HandleFunc("example.com", custom[0].serve(nil))
 
 	dohTest(t, handler, func(r Resolver, bind string) {

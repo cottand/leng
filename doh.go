@@ -84,48 +84,35 @@ func (s *ServerHTTPS) Stop() error {
 	return nil
 }
 
-// ServeHTTP is the handler that gets the HTTP request and converts to the dns format, calls the plugin
-// chain, converts it back and write it to the client.
+// ServeHTTP is the handler that gets the HTTP request and converts to the dns format, calls the resolver,
+// converts it back and write it to the client.
 func (s *ServerHTTPS) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if !(r.URL.Path == pathDOH) {
 		http.Error(w, "", http.StatusNotFound)
-		s.countResponse(http.StatusNotFound)
+		countResponse(http.StatusNotFound)
 		return
 	}
 
 	msg, err := requestToMsg(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
-		s.countResponse(http.StatusBadRequest)
+		countResponse(http.StatusBadRequest)
+		logger.Noticef("error when serving DoH request: %v", err)
 		return
 	}
 
-	var writer = DohResponseWriter{remoteAddr: r.RemoteAddr}
+	var writer = DohResponseWriter{remoteAddr: r.RemoteAddr, host: r.Host, delegate: w}
 	s.handler.ServeDNS(&writer, msg)
-
-	// See section 4.2.1 of RFC 8484.
-	// We are using code 500 to indicate an unexpected situation when the chain
-	// handler has not provided any response message.
-	if writer.msg == nil {
-		http.Error(w, "No response", http.StatusInternalServerError)
-		s.countResponse(http.StatusInternalServerError)
+	if writer.err != nil {
 		return
 	}
-
-	buf, _ := writer.msg.Pack()
 
 	age := s.config.TTL // seconds
 
-	w.Header().Set("Content-Type", mimeTypeDOH)
 	w.Header().Set("Cache-Control", fmt.Sprintf("max-age=%v", age))
-	w.Header().Set("Content-Length", strconv.Itoa(len(buf)))
-	w.WriteHeader(http.StatusOK)
-	s.countResponse(http.StatusOK)
-
-	_, _ = w.Write(buf)
 }
 
-func (s *ServerHTTPS) countResponse(status int) {
+func countResponse(status int) {
 	metric.DohResponseCount.With(prometheus.Labels{"status": fmt.Sprint(status)})
 }
 
@@ -193,44 +180,60 @@ var _ dns.ResponseWriter = &DohResponseWriter{}
 type DohResponseWriter struct {
 	msg        *dns.Msg
 	remoteAddr string
+	delegate   http.ResponseWriter
+	host       string
+	err        error
+}
+
+// See section 4.2.1 of RFC 8484.
+// We are using code 500 to indicate an unexpected situation when the chain
+// handler has not provided any response message.
+func (w *DohResponseWriter) handleErr(err error) {
+	http.Error(w.delegate, "No response", http.StatusInternalServerError)
+	countResponse(http.StatusInternalServerError)
+	w.err = err
+	return
 }
 
 func (w *DohResponseWriter) LocalAddr() net.Addr {
-	//TODO implement me
-	panic("implement me")
+	addr, _ := net.ResolveTCPAddr("tcp", w.remoteAddr)
+	return addr
 }
 
 func (w *DohResponseWriter) RemoteAddr() net.Addr {
-	//TODO implement me
-	panic("implement me")
+	addr, _ := net.ResolveTCPAddr("tcp", w.remoteAddr)
+	return addr
 }
 
 func (w *DohResponseWriter) WriteMsg(msg *dns.Msg) error {
-	//TODO implement me
-	panic("implement me")
+	w.msg = msg
+	buf, _ := msg.Pack()
+	w.delegate.Header().Set("Content-Length", strconv.Itoa(len(buf)))
+	w.delegate.Header().Set("Content-Type", mimeTypeDOH)
+	_, err := w.Write(buf)
+	if err != nil {
+		w.handleErr(err)
+		return err
+	}
+	countResponse(http.StatusOK)
+	return nil
 }
 
 func (w *DohResponseWriter) Write(bytes []byte) (int, error) {
-	//TODO implement me
-	panic("implement me")
+	return w.delegate.Write(bytes)
 }
 
 func (w *DohResponseWriter) Close() error {
-	//TODO implement me
-	panic("implement me")
+	return nil
 }
 
 func (w *DohResponseWriter) TsigStatus() error {
-	//TODO implement me
-	panic("implement me")
+	return nil
 }
 
 func (w *DohResponseWriter) TsigTimersOnly(b bool) {
-	//TODO implement me
-	panic("implement me")
 }
 
 func (w *DohResponseWriter) Hijack() {
-	//TODO implement me
-	panic("implement me")
+	return
 }
