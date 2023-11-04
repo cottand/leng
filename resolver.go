@@ -71,8 +71,8 @@ func (r *Resolver) Lookup(net string, req *dns.Msg, timeout int, interval int, n
 
 	c := &dns.Client{
 		Net:          net,
-		ReadTimeout:  r.Timeout(timeout),
-		WriteTimeout: r.Timeout(timeout),
+		ReadTimeout:  time.Duration(timeout) * time.Second,
+		WriteTimeout: time.Duration(timeout) * time.Second,
 	}
 
 	qname := req.Question[0].Name
@@ -131,11 +131,6 @@ func (r *Resolver) Lookup(net string, req *dns.Msg, timeout int, interval int, n
 	}
 }
 
-// Timeout returns the resolver timeout
-func (r *Resolver) Timeout(timeout int) time.Duration {
-	return time.Duration(timeout) * time.Second
-}
-
 // DoHLookup performs a DNS lookup over https
 func (r *Resolver) DoHLookup(url string, timeout int, req *dns.Msg) (msg *dns.Msg, err error) {
 	qname := req.Question[0].Name
@@ -155,7 +150,7 @@ func (r *Resolver) DoHLookup(url string, timeout int, req *dns.Msg) (msg *dns.Ms
 
 	//Make the request to the server
 	client := http.Client{
-		Timeout: r.Timeout(timeout),
+		Timeout: time.Duration(timeout) * time.Second,
 	}
 
 	reader := bytes.NewReader(data)

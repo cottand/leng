@@ -15,8 +15,10 @@ type Server struct {
 	handler               *DNSHandler
 	udpServer             *dns.Server
 	tcpServer             *dns.Server
+	httpServer            *ServerHTTPS
 	udpHandler            *dns.ServeMux
 	tcpHandler            *dns.ServeMux
+	httpHandler           *dns.ServeMux
 	activeHandlerPatterns []string
 }
 
@@ -35,18 +37,23 @@ func (s *Server) Run(
 	udpHandler := dns.NewServeMux()
 	udpHandler.HandleFunc(".", s.handler.DoUDP)
 
+	httpHandler := dns.NewServeMux()
+	udpHandler.HandleFunc(".", s.handler.DoHTTP)
+
 	handlerPatterns := make([]string, len(config.CustomDNSRecords))
 
 	for _, record := range NewCustomDNSRecordsFromText(config.CustomDNSRecords) {
 		dnsHandler := record.serve(s.handler)
 		tcpHandler.HandleFunc(record.name, dnsHandler)
 		udpHandler.HandleFunc(record.name, dnsHandler)
+		httpHandler.HandleFunc(record.name, dnsHandler)
 		handlerPatterns = append(handlerPatterns, record.name)
 	}
 	s.activeHandlerPatterns = handlerPatterns
 
 	s.tcpHandler = tcpHandler
 	s.udpHandler = udpHandler
+	s.httpHandler = httpHandler
 
 	s.tcpServer = &dns.Server{
 		Addr:         s.host,
@@ -65,8 +72,15 @@ func (s *Server) Run(
 		WriteTimeout: s.wTimeout,
 	}
 
+	var err error
+	s.httpServer, err = NewServerHTTPS(config.Bind, httpHandler, config)
+	if err != nil {
+		logger.Criticalf("failed to start http server %v", err)
+	}
+
 	go s.start(s.udpServer)
 	go s.start(s.tcpServer)
+	go s.startHttp()
 }
 
 func (s *Server) start(ds *dns.Server) {
@@ -74,6 +88,14 @@ func (s *Server) start(ds *dns.Server) {
 
 	if err := ds.ListenAndServe(); err != nil {
 		logger.Criticalf("start %s listener on %s failed: %s\n", ds.Net, s.host, err.Error())
+	}
+}
+
+func (s *Server) startHttp() {
+	logger.Criticalf("start http listener on %s\n", s.host)
+
+	if err := s.httpServer.httpsServer.ListenAndServe(); err != nil {
+		logger.Criticalf("start http listener on %s failed: %s\n", s.host, err.Error())
 	}
 }
 
@@ -93,6 +115,13 @@ func (s *Server) Stop() {
 	}
 	if s.tcpServer != nil {
 		err := s.tcpServer.Shutdown()
+		if err != nil {
+			logger.Critical(err)
+		}
+	}
+
+	if s.httpServer != nil {
+		err := s.httpServer.Stop()
 		if err != nil {
 			logger.Critical(err)
 		}

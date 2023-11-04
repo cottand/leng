@@ -52,7 +52,9 @@ func (records CustomDNSRecords) serve(serverHandler *DNSHandler) func(dns.Respon
 		m.SetReply(req)
 		m.Answer = append(m.Answer, records.answer...)
 
-		serverHandler.WriteReplyMsg(writer, m)
+		if serverHandler != nil {
+			serverHandler.WriteReplyMsg(writer, m)
+		}
 		metric.RequestCustomCounter.Inc()
 		metric.ReportDNSResponse(writer, m, false)
 	}
