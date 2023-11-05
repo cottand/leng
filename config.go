@@ -2,19 +2,21 @@ package main
 
 import (
 	cTls "crypto/tls"
+	"errors"
 	"fmt"
 	"github.com/cottand/grimd/tls"
 	"github.com/jonboulle/clockwork"
 	"github.com/pelletier/go-toml/v2"
 	"log"
 	"os"
+	"strings"
 )
 
 // BuildVersion returns the build version of grimd, this should be incremented every new release
-var BuildVersion = "2.2.1"
+var BuildVersion = "1.3.0"
 
 // ConfigVersion returns the version of grimd, this should be incremented every time the config changes so grimd presents a warning
-var ConfigVersion = "2.2.1"
+var ConfigVersion = "1.3.0"
 
 // Config holds the configuration parameters
 type Config struct {
@@ -193,6 +195,19 @@ func parseDefaultConfig() Config {
 // WallClock is the wall clock
 var WallClock = clockwork.NewRealClock()
 
+func contextualisedParsingErrorFrom(err error) error {
+	errString := strings.Builder{}
+	var derr *toml.DecodeError
+	_, _ = fmt.Fprint(&errString, "could not load config:", err)
+	if errors.As(err, &derr) {
+		errString.WriteByte('\n')
+		_, _ = fmt.Fprintln(&errString, derr.String())
+		row, col := derr.Position()
+		_, _ = fmt.Fprintln(&errString, "error occurred at row", row, "column", col)
+	}
+	return errors.New(errString.String())
+}
+
 // LoadConfig loads the given config file
 func LoadConfig(path string) (*Config, error) {
 
@@ -203,8 +218,20 @@ func LoadConfig(path string) (*Config, error) {
 		return &config, nil
 	}
 
-	if err := toml.Unmarshal([]byte(path), &config); err != nil {
-		return nil, fmt.Errorf("could not load config: %s", err)
+	file, err := os.Open(path)
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		log.Printf("warning, failed to open config - using defaults")
+		return &config, nil
+	}
+
+	defer func(file *os.File) {
+		_ = file.Close()
+	}(file)
+
+	d := toml.NewDecoder(file)
+
+	if err := d.Decode(&config); err != nil {
+		return nil, contextualisedParsingErrorFrom(err)
 	}
 
 	dohTls, err := config.DnsOverHttpServer.TLS.parsedConfig()
