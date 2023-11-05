@@ -72,15 +72,16 @@ func (s *Server) Run(
 		WriteTimeout: s.wTimeout,
 	}
 
-	var err error
-	s.httpServer, err = NewServerHTTPS(config.Bind, httpHandler, config)
-	if err != nil {
-		logger.Criticalf("failed to start http server %v", err)
+	if config.DnsOverHttpServer.Enabled {
+		var err error
+		s.httpServer, err = NewServerHTTPS(config.Bind, httpHandler, config)
+		if err != nil {
+			logger.Criticalf("failed to create http server %v", err)
+		}
+		go s.startHttp()
 	}
-
 	go s.start(s.udpServer)
 	go s.start(s.tcpServer)
-	go s.startHttp()
 }
 
 func (s *Server) start(ds *dns.Server) {
