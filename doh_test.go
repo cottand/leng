@@ -54,10 +54,11 @@ func dohTest(t *testing.T, handler dns.Handler, doTest func(r Resolver, bind str
 	bind := "localhost:7698"
 	config := parseDefaultConfig()
 	loggingState, _ := loggerInit(config.LogConfig)
+	config.DnsOverHttpServer.Bind = bind
 	defer func() {
 		loggingState.cleanUp()
 	}()
-	doh, err := NewServerHTTPS(bind, handler, &config)
+	doh, err := NewServerHTTPS(handler, &config)
 	defer doh.Shutdown()
 
 	if err != nil {

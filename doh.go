@@ -34,7 +34,6 @@ type ServerHTTPS struct {
 	Net          string
 	handler      dns.Handler
 	httpsServer  *http.Server
-	listenAddr   net.Addr
 	tlsConfig    *tls.Config
 	validRequest func(*http.Request) bool
 	config       *Config
@@ -50,7 +49,7 @@ func (l *loggerAdapter) Write(p []byte) (n int, err error) {
 }
 
 // NewServerHTTPS returns a new HTTPS server capable of performing DoH with dns
-func NewServerHTTPS(addr string, dns dns.Handler, config *Config) (*ServerHTTPS, error) {
+func NewServerHTTPS(dns dns.Handler, config *Config) (*ServerHTTPS, error) {
 	var tlsConfig = config.DnsOverHttpServer.parsedTls
 
 	// http/2 is recommended when using DoH. We need to specify it in next protos
@@ -65,12 +64,11 @@ func NewServerHTTPS(addr string, dns dns.Handler, config *Config) (*ServerHTTPS,
 		ReadTimeout:  time.Duration(config.DnsOverHttpServer.TimeoutMs) * time.Millisecond,
 		WriteTimeout: time.Duration(config.DnsOverHttpServer.TimeoutMs) * time.Millisecond,
 		ErrorLog:     stdlog.New(&loggerAdapter{}, "", 0),
-		Addr:         addr,
+		Addr:         config.DnsOverHttpServer.Bind,
 	}
 	sh := &ServerHTTPS{
 		handler: dns, tlsConfig: tlsConfig, httpsServer: srv, config: config,
 	}
-
 	srv.Handler = sh
 
 	return sh, nil
@@ -231,7 +229,7 @@ func (w *DohResponseWriter) TsigStatus() error {
 	return nil
 }
 
-func (w *DohResponseWriter) TsigTimersOnly(b bool) {
+func (w *DohResponseWriter) TsigTimersOnly(_ bool) {
 }
 
 func (w *DohResponseWriter) Hijack() {

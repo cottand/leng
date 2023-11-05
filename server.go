@@ -74,7 +74,7 @@ func (s *Server) Run(
 
 	if config.DnsOverHttpServer.Enabled {
 		var err error
-		s.httpServer, err = NewServerHTTPS(config.DnsOverHttpServer.Bind, httpHandler, config)
+		s.httpServer, err = NewServerHTTPS(httpHandler, config)
 		if err != nil {
 			logger.Criticalf("failed to create http server %v", err)
 		}
