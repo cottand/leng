@@ -9,6 +9,7 @@ import (
 	"github.com/pelletier/go-toml/v2"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -218,9 +219,10 @@ func LoadConfig(path string) (*Config, error) {
 		return &config, nil
 	}
 
+	path = filepath.Clean(path)
 	file, err := os.Open(path)
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		log.Printf("warning, failed to open config - using defaults")
+	if err != nil {
+		log.Printf("warning, failed to open config (%v) - using defaults", err)
 		return &config, nil
 	}
 
