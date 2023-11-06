@@ -7,6 +7,17 @@
 
 Forked from [looterz/grimd](https://github.com/looterz/grimd)
 
+# Features
+- [x] DNS over UTP
+- [x] DNS over TCP
+- [x] DNS over HTTP(S) (DoH)
+- [x] Prometheus metrics API
+- [x] Custom DNS records supports
+- [x] Blocklist fetching
+- [x] Hardcoded blocklist config
+- [x] Hardcoded whitelist config
+- [x] Fast startup _(so it can be used with templating for service discovery)_
+
 # Installation
 ```
 go install github.com/cottand/grimd@latest

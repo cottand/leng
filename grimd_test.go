@@ -148,6 +148,27 @@ func Test2in3DifferentARecords(t *testing.T) {
 	)
 }
 
+func TestDohIntegration(t *testing.T) {
+	dohBind := "localhost:8181"
+	integrationTest(func(c *Config) {
+		c.DnsOverHttpServer.Bind = dohBind
+		c.DnsOverHttpServer.Enabled = true
+		c.CustomDNSRecords = []string{"example.com          IN  A       10.10.0.1 "}
+	}, func(_ *dns.Client, _ string) {
+		r := Resolver{}
+
+		response, err := r.DoHLookup("http://"+dohBind+"/dns-query", 1, dnsAQuestion("example.com."))
+
+		if err != nil {
+			t.Fatalf("unexpected error during lookup %v", err)
+		}
+
+		if !strings.Contains(response.Answer[0].String(), "10.0.0.0") {
+			t.Fatalf("failed to answer dns query for example.org - expected 10.0.0.0 but got %v", response.Answer)
+		}
+
+	})
+}
 func TestConfigReloadForCustomRecords(t *testing.T) {
 	testDnsHost := "127.0.0.1:5300"
 	var config Config

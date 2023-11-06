@@ -36,7 +36,8 @@ type ServerHTTPS struct {
 	httpsServer  *http.Server
 	tlsConfig    *tls.Config
 	validRequest func(*http.Request) bool
-	config       *Config
+	bind         string
+	ttl          time.Duration
 }
 
 // loggerAdapter is a simple adapter around CoreDNS logger made to implement io.Writer in order to log errors from HTTP server
@@ -49,29 +50,38 @@ func (l *loggerAdapter) Write(p []byte) (n int, err error) {
 }
 
 // NewServerHTTPS returns a new HTTPS server capable of performing DoH with dns
-func NewServerHTTPS(dns dns.Handler, config *Config) (*ServerHTTPS, error) {
-	var tlsConfig = config.DnsOverHttpServer.parsedTls
+func NewServerHTTPS(
+	dns dns.Handler,
+	bind string,
+	timeout time.Duration,
+	ttl time.Duration,
+	tls *tls.Config,
+) (*ServerHTTPS, error) {
 
 	// http/2 is recommended when using DoH. We need to specify it in next protos
 	// or the upgrade won't happen.
-	if tlsConfig != nil {
-		tlsConfig.NextProtos = []string{"h2", "http/1.1"}
+	if tls != nil {
+		tls.NextProtos = []string{"h2", "http/1.1"}
 	}
 
 	// Use a custom request validation func or use the standard DoH path check.
 
 	srv := &http.Server{
-		ReadTimeout:  time.Duration(config.DnsOverHttpServer.TimeoutMs) * time.Millisecond,
-		WriteTimeout: time.Duration(config.DnsOverHttpServer.TimeoutMs) * time.Millisecond,
+		ReadTimeout:  timeout,
+		WriteTimeout: timeout,
 		ErrorLog:     stdlog.New(&loggerAdapter{}, "", 0),
-		Addr:         config.DnsOverHttpServer.Bind,
+		Addr:         bind,
 	}
 	sh := &ServerHTTPS{
-		handler: dns, tlsConfig: tlsConfig, httpsServer: srv, config: config,
+		handler: dns, httpsServer: srv, ttl: ttl, bind: bind,
 	}
 	srv.Handler = sh
 
 	return sh, nil
+}
+
+func (s *ServerHTTPS) ListenAndServe() error {
+	return s.httpsServer.ListenAndServe()
 }
 
 // Stop stops the server. It blocks until the server is totally stopped.
@@ -105,9 +115,9 @@ func (s *ServerHTTPS) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	age := s.config.TTL // seconds
+	age := s.ttl // seconds
 
-	w.Header().Set("Cache-Control", fmt.Sprintf("max-age=%v", age))
+	w.Header().Set("Cache-Control", fmt.Sprintf("max-age=%v", age.Seconds()))
 }
 
 func countResponse(status int) {

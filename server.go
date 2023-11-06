@@ -74,11 +74,13 @@ func (s *Server) Run(
 
 	if config.DnsOverHttpServer.Enabled {
 		var err error
-		s.httpServer, err = NewServerHTTPS(httpHandler, config)
+		timeout := time.Duration(config.DnsOverHttpServer.TimeoutMs) * time.Millisecond
+		ttl := time.Duration(config.TTL) * time.Second
+		s.httpServer, err = NewServerHTTPS(httpHandler, config.DnsOverHttpServer.Bind, timeout, ttl, config.DnsOverHttpServer.parsedTls)
 		if err != nil {
 			logger.Criticalf("failed to create http server %v", err)
 		}
-		go s.startHttp()
+		go s.startHttp(config.DnsOverHttpServer.Bind)
 	}
 	go s.start(s.udpServer)
 	go s.start(s.tcpServer)
@@ -92,11 +94,11 @@ func (s *Server) start(ds *dns.Server) {
 	}
 }
 
-func (s *Server) startHttp() {
-	logger.Criticalf("start http listener on %s\n", s.host)
+func (s *Server) startHttp(addr string) {
+	logger.Criticalf("start http listener on %s\n", addr)
 
-	if err := s.httpServer.httpsServer.ListenAndServe(); err != nil {
-		logger.Criticalf("start http listener on %s failed: %s\n", s.host, err.Error())
+	if err := s.httpServer.ListenAndServe(); err != nil {
+		logger.Criticalf("start http listener on %s failed or was closed: %s\n", addr, err.Error())
 	}
 }
 
