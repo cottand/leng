@@ -15,8 +15,10 @@ type Server struct {
 	handler               *DNSHandler
 	udpServer             *dns.Server
 	tcpServer             *dns.Server
+	httpServer            *ServerHTTPS
 	udpHandler            *dns.ServeMux
 	tcpHandler            *dns.ServeMux
+	httpHandler           *dns.ServeMux
 	activeHandlerPatterns []string
 }
 
@@ -35,18 +37,23 @@ func (s *Server) Run(
 	udpHandler := dns.NewServeMux()
 	udpHandler.HandleFunc(".", s.handler.DoUDP)
 
+	httpHandler := dns.NewServeMux()
+	httpHandler.HandleFunc(".", s.handler.DoHTTP)
+
 	handlerPatterns := make([]string, len(config.CustomDNSRecords))
 
 	for _, record := range NewCustomDNSRecordsFromText(config.CustomDNSRecords) {
 		dnsHandler := record.serve(s.handler)
 		tcpHandler.HandleFunc(record.name, dnsHandler)
 		udpHandler.HandleFunc(record.name, dnsHandler)
+		httpHandler.HandleFunc(record.name, dnsHandler)
 		handlerPatterns = append(handlerPatterns, record.name)
 	}
 	s.activeHandlerPatterns = handlerPatterns
 
 	s.tcpHandler = tcpHandler
 	s.udpHandler = udpHandler
+	s.httpHandler = httpHandler
 
 	s.tcpServer = &dns.Server{
 		Addr:         s.host,
@@ -65,6 +72,16 @@ func (s *Server) Run(
 		WriteTimeout: s.wTimeout,
 	}
 
+	if config.DnsOverHttpServer.Enabled {
+		var err error
+		timeout := time.Duration(config.DnsOverHttpServer.TimeoutMs) * time.Millisecond
+		ttl := time.Duration(config.TTL) * time.Second
+		s.httpServer, err = NewServerHTTPS(httpHandler, config.DnsOverHttpServer.Bind, timeout, ttl, config.DnsOverHttpServer.parsedTls)
+		if err != nil {
+			logger.Criticalf("failed to create http server %v", err)
+		}
+		go s.startHttp(config.DnsOverHttpServer.Bind)
+	}
 	go s.start(s.udpServer)
 	go s.start(s.tcpServer)
 }
@@ -74,6 +91,14 @@ func (s *Server) start(ds *dns.Server) {
 
 	if err := ds.ListenAndServe(); err != nil {
 		logger.Criticalf("start %s listener on %s failed: %s\n", ds.Net, s.host, err.Error())
+	}
+}
+
+func (s *Server) startHttp(addr string) {
+	logger.Criticalf("start http listener on %s\n", addr)
+
+	if err := s.httpServer.ListenAndServe(); err != nil {
+		logger.Criticalf("start http listener on %s failed or was closed: %s\n", addr, err.Error())
 	}
 }
 
@@ -93,6 +118,13 @@ func (s *Server) Stop() {
 	}
 	if s.tcpServer != nil {
 		err := s.tcpServer.Shutdown()
+		if err != nil {
+			logger.Critical(err)
+		}
+	}
+
+	if s.httpServer != nil {
+		err := s.httpServer.Stop()
 		if err != nil {
 			logger.Critical(err)
 		}
@@ -118,12 +150,14 @@ func (s *Server) ReloadConfig(config *Config) {
 	for _, deleted := range deletedRecords {
 		s.tcpHandler.HandleRemove(deleted)
 		s.udpHandler.HandleRemove(deleted)
+		s.httpHandler.HandleRemove(deleted)
 	}
 
 	for _, record := range newRecords {
 		dnsHandler := record.serve(s.handler)
 		s.tcpHandler.HandleFunc(record.name, dnsHandler)
 		s.udpHandler.HandleFunc(record.name, dnsHandler)
+		s.httpHandler.HandleFunc(record.name, dnsHandler)
 	}
 	s.activeHandlerPatterns = newRecordsPatterns
 }

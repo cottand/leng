@@ -7,6 +7,18 @@
 
 Forked from [looterz/grimd](https://github.com/looterz/grimd)
 
+# Features
+- [x] DNS over UTP
+- [x] DNS over TCP
+- [x] DNS over HTTP(S) (DoH as per [RFC-8484](https://datatracker.ietf.org/doc/html/rfc8484))
+- [x] Prometheus metrics API
+- [x] Custom DNS records supports
+- [x] Blocklist fetching
+- [x] Hardcoded blocklist config
+- [x] Hardcoded whitelist config
+- [x] Fast startup _(so it can be used with templating for service discovery)_
+- [x] Small memory footprint (~50MBs with metrics and DoH enabled)
+
 # Installation
 ```
 go install github.com/cottand/grimd@latest
@@ -46,7 +58,7 @@ Usage of grimd:
 # Building
 Requires golang 1.7 or higher, you build grimd like any other golang application, for example to build for linux x64
 ```shell
-env GOOS=linux GOARCH=amd64 go build -v github.com/looterz/grimd
+env GOOS=linux GOARCH=amd64 go build -v github.com/cottand/grimd
 ```
 
 # Building Docker
@@ -78,8 +90,8 @@ These are some of the things I would like to contribute in this fork:
   - [x] ~~Fix multi-record responses issue#5~~
   - [ ] DNS record flattening issue#1
   - [ ] Service discovery integrations? issue#4
-- [ ] Prometheus metrics exporter issue#3
-- [ ] DNS over HTTPS #2
+- [x] Prometheus metrics exporter issue#3
+- [x] DNS over HTTPS #2
 - [ ] Add lots of docs
 
 ## Non-objectives

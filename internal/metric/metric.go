@@ -53,6 +53,13 @@ var (
 			Name:      "config_reload_customdns",
 			Help:      "Custom DNS config reloads",
 		})
+
+	DohResponseCount = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: Namespace,
+			Name:      "doh_response_count",
+			Help:      "Successful DoH responses",
+		}, []string{"status"})
 )
 
 func init() {

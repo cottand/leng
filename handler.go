@@ -104,6 +104,8 @@ func (h *DNSHandler) do(config *Config, blockCache *MemoryBlockCache, questionCa
 			var remote net.IP
 			if Net == "tcp" {
 				remote = w.RemoteAddr().(*net.TCPAddr).IP
+			} else if Net == "http" {
+				remote = w.RemoteAddr().(*net.TCPAddr).IP
 			} else {
 				remote = w.RemoteAddr().(*net.UDPAddr).IP
 			}
@@ -275,19 +277,27 @@ func (h *DNSHandler) do(config *Config, blockCache *MemoryBlockCache, questionCa
 // DoTCP begins a tcp query
 func (h *DNSHandler) DoTCP(w dns.ResponseWriter, req *dns.Msg) {
 	h.muActive.RLock()
+	defer h.muActive.RUnlock()
 	if h.active {
 		h.requestChannel <- DNSOperationData{"tcp", w, req}
 	}
-	h.muActive.RUnlock()
 }
 
 // DoUDP begins a udp query
 func (h *DNSHandler) DoUDP(w dns.ResponseWriter, req *dns.Msg) {
 	h.muActive.RLock()
+	defer h.muActive.RUnlock()
 	if h.active {
 		h.requestChannel <- DNSOperationData{"udp", w, req}
 	}
-	h.muActive.RUnlock()
+}
+
+func (h *DNSHandler) DoHTTP(w dns.ResponseWriter, req *dns.Msg) {
+	h.muActive.RLock()
+	defer h.muActive.RUnlock()
+	if h.active {
+		h.requestChannel <- DNSOperationData{"http", w, req}
+	}
 }
 
 // HandleFailed handles dns failures
