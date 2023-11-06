@@ -38,7 +38,7 @@ func (s *Server) Run(
 	udpHandler.HandleFunc(".", s.handler.DoUDP)
 
 	httpHandler := dns.NewServeMux()
-	udpHandler.HandleFunc(".", s.handler.DoHTTP)
+	httpHandler.HandleFunc(".", s.handler.DoHTTP)
 
 	handlerPatterns := make([]string, len(config.CustomDNSRecords))
 
@@ -150,12 +150,14 @@ func (s *Server) ReloadConfig(config *Config) {
 	for _, deleted := range deletedRecords {
 		s.tcpHandler.HandleRemove(deleted)
 		s.udpHandler.HandleRemove(deleted)
+		s.httpHandler.HandleRemove(deleted)
 	}
 
 	for _, record := range newRecords {
 		dnsHandler := record.serve(s.handler)
 		s.tcpHandler.HandleFunc(record.name, dnsHandler)
 		s.udpHandler.HandleFunc(record.name, dnsHandler)
+		s.httpHandler.HandleFunc(record.name, dnsHandler)
 	}
 	s.activeHandlerPatterns = newRecordsPatterns
 }

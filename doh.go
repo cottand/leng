@@ -197,6 +197,7 @@ type DohResponseWriter struct {
 // We are using code 500 to indicate an unexpected situation when the chain
 // handler has not provided any response message.
 func (w *DohResponseWriter) handleErr(err error) {
+	logger.Warningf("error when replying to DoH: %v", err)
 	http.Error(w.delegate, "No response", http.StatusInternalServerError)
 	countResponse(http.StatusInternalServerError)
 	w.err = err
@@ -215,10 +216,14 @@ func (w *DohResponseWriter) RemoteAddr() net.Addr {
 
 func (w *DohResponseWriter) WriteMsg(msg *dns.Msg) error {
 	w.msg = msg
-	buf, _ := msg.Pack()
+	buf, err := msg.Pack()
+	if err != nil {
+		w.handleErr(err)
+		return err
+	}
 	w.delegate.Header().Set("Content-Length", strconv.Itoa(len(buf)))
 	w.delegate.Header().Set("Content-Type", mimeTypeDOH)
-	_, err := w.Write(buf)
+	_, err = w.Write(buf)
 	if err != nil {
 		w.handleErr(err)
 		return err

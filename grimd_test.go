@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"github.com/pelletier/go-toml/v2"
+	"io"
+	"net/http"
 	"strings"
 	"testing"
 	"time"
@@ -165,6 +167,38 @@ func TestDohIntegration(t *testing.T) {
 
 		if !strings.Contains(response.Answer[0].String(), "10.10.0.1") {
 			t.Fatalf("failed to answer dns query for example.org - expected 10.10.0.1 but got %v", response.Answer)
+		}
+
+	})
+}
+
+func TestDohAsProxy(t *testing.T) {
+	t.SkipNow() // see https://github.com/coredns/coredns/issues/4547
+	dohBind := "localhost:8181"
+	integrationTest(func(c *Config) {
+		c.DnsOverHttpServer.Bind = dohBind
+		c.DnsOverHttpServer.Enabled = true
+		//c.CustomDNSRecords = []string{"example.com          IN  A       10.10.0.1 "}
+	}, func(_ *dns.Client, _ string) {
+		resp, err := http.Get("http://" + dohBind + "/dns-query?dns=AAABAAABAAAAAAAAA3d3dwdleGFtcGxlA2NvbQAAAQAB")
+
+		if err != nil {
+			t.Fatalf("unexpected error during lookup %v", err)
+		}
+		respPacket, err := io.ReadAll(resp.Body)
+
+		defer func(Body io.ReadCloser) {
+			_ = Body.Close()
+		}(resp.Body)
+
+		msg := dns.Msg{}
+		err = msg.Unpack(respPacket)
+		if err != nil {
+			t.Fatalf("unexpected error during lookup %v", err)
+		}
+
+		if len(msg.Answer) < 1 {
+			t.Fatalf("failed to answer dns query for example.com - expected some answer but got nothing")
 		}
 
 	})

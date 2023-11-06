@@ -10,13 +10,14 @@ Forked from [looterz/grimd](https://github.com/looterz/grimd)
 # Features
 - [x] DNS over UTP
 - [x] DNS over TCP
-- [x] DNS over HTTP(S) (DoH)
+- [x] DNS over HTTP(S) (DoH as per [RFC-8484](https://datatracker.ietf.org/doc/html/rfc8484))
 - [x] Prometheus metrics API
 - [x] Custom DNS records supports
 - [x] Blocklist fetching
 - [x] Hardcoded blocklist config
 - [x] Hardcoded whitelist config
 - [x] Fast startup _(so it can be used with templating for service discovery)_
+- [x] Small memory footprint (~50MBs with metrics and DoH enabled)
 
 # Installation
 ```

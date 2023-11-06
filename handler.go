@@ -104,6 +104,8 @@ func (h *DNSHandler) do(config *Config, blockCache *MemoryBlockCache, questionCa
 			var remote net.IP
 			if Net == "tcp" {
 				remote = w.RemoteAddr().(*net.TCPAddr).IP
+			} else if Net == "http" {
+				remote = w.RemoteAddr().(*net.TCPAddr).IP
 			} else {
 				remote = w.RemoteAddr().(*net.UDPAddr).IP
 			}
