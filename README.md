@@ -58,7 +58,7 @@ Usage of grimd:
 # Building
 Requires golang 1.7 or higher, you build grimd like any other golang application, for example to build for linux x64
 ```shell
-env GOOS=linux GOARCH=amd64 go build -v github.com/looterz/grimd
+env GOOS=linux GOARCH=amd64 go build -v github.com/cottand/grimd
 ```
 
 # Building Docker
@@ -90,8 +90,8 @@ These are some of the things I would like to contribute in this fork:
   - [x] ~~Fix multi-record responses issue#5~~
   - [ ] DNS record flattening issue#1
   - [ ] Service discovery integrations? issue#4
-- [ ] Prometheus metrics exporter issue#3
-- [ ] DNS over HTTPS #2
+- [x] Prometheus metrics exporter issue#3
+- [x] DNS over HTTPS #2
 - [ ] Add lots of docs
 
 ## Non-objectives
