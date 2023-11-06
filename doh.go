@@ -108,7 +108,7 @@ func (s *ServerHTTPS) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var writer = DohResponseWriter{remoteAddr: r.RemoteAddr, host: r.Host, delegate: w, completed: make(chan empty)}
+	var writer = DohResponseWriter{remoteAddr: r.RemoteAddr, host: r.Host, delegate: w, completed: make(chan empty, 1)}
 	s.handler.ServeDNS(&writer, msg)
 	_, ok := <-writer.completed
 	if writer.err != nil || ok != true {
