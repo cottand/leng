@@ -172,13 +172,12 @@ func TestDohIntegration(t *testing.T) {
 	})
 }
 
+// TestDohAsProxy checks that DoH works for non-custom records
 func TestDohAsProxy(t *testing.T) {
-	t.SkipNow() // see https://github.com/coredns/coredns/issues/4547
 	dohBind := "localhost:8181"
 	integrationTest(func(c *Config) {
 		c.DnsOverHttpServer.Bind = dohBind
 		c.DnsOverHttpServer.Enabled = true
-		//c.CustomDNSRecords = []string{"example.com          IN  A       10.10.0.1 "}
 	}, func(_ *dns.Client, _ string) {
 		resp, err := http.Get("http://" + dohBind + "/dns-query?dns=AAABAAABAAAAAAAAA3d3dwdleGFtcGxlA2NvbQAAAQAB")
 
@@ -194,7 +193,7 @@ func TestDohAsProxy(t *testing.T) {
 		msg := dns.Msg{}
 		err = msg.Unpack(respPacket)
 		if err != nil {
-			t.Fatalf("unexpected error during lookup %v", err)
+			t.Fatalf("unexpected error during lookup %v (response len=%vB)", err, len(respPacket))
 		}
 
 		if len(msg.Answer) < 1 {

@@ -12,7 +12,6 @@ import (
 	stdlog "log"
 	"net"
 	"net/http"
-	"strconv"
 	"time"
 )
 
@@ -109,9 +108,10 @@ func (s *ServerHTTPS) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var writer = DohResponseWriter{remoteAddr: r.RemoteAddr, host: r.Host, delegate: w}
+	var writer = DohResponseWriter{remoteAddr: r.RemoteAddr, host: r.Host, delegate: w, completed: make(chan empty)}
 	s.handler.ServeDNS(&writer, msg)
-	if writer.err != nil {
+	_, ok := <-writer.completed
+	if writer.err != nil || ok != true {
 		return
 	}
 
@@ -170,7 +170,7 @@ func getRequestToMsg(req *http.Request) (*dns.Msg, error) {
 }
 
 func base64ToMsg(b64 string) (*dns.Msg, error) {
-	buf, err := b64Enc.DecodeString(b64)
+	buf, err := base64.RawURLEncoding.DecodeString(b64)
 	if err != nil {
 		return nil, err
 	}
@@ -181,16 +181,16 @@ func base64ToMsg(b64 string) (*dns.Msg, error) {
 	return m, err
 }
 
-var b64Enc = base64.RawURLEncoding
+type empty struct{}
 
-var _ dns.ResponseWriter = &DohResponseWriter{}
-
+// DohResponseWriter implements dns.ResponseWriter
 type DohResponseWriter struct {
 	msg        *dns.Msg
 	remoteAddr string
 	delegate   http.ResponseWriter
 	host       string
 	err        error
+	completed  chan empty
 }
 
 // See section 4.2.1 of RFC 8484.
@@ -215,13 +215,16 @@ func (w *DohResponseWriter) RemoteAddr() net.Addr {
 }
 
 func (w *DohResponseWriter) WriteMsg(msg *dns.Msg) error {
+	defer func() {
+		w.completed <- empty{}
+		close(w.completed)
+	}()
 	w.msg = msg
 	buf, err := msg.Pack()
 	if err != nil {
 		w.handleErr(err)
 		return err
 	}
-	w.delegate.Header().Set("Content-Length", strconv.Itoa(len(buf)))
 	w.delegate.Header().Set("Content-Type", mimeTypeDOH)
 	_, err = w.Write(buf)
 	if err != nil {
