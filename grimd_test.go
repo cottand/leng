@@ -163,8 +163,8 @@ func TestDohIntegration(t *testing.T) {
 			t.Fatalf("unexpected error during lookup %v", err)
 		}
 
-		if !strings.Contains(response.Answer[0].String(), "10.0.0.0") {
-			t.Fatalf("failed to answer dns query for example.org - expected 10.0.0.0 but got %v", response.Answer)
+		if !strings.Contains(response.Answer[0].String(), "10.10.0.1") {
+			t.Fatalf("failed to answer dns query for example.org - expected 10.10.0.1 but got %v", response.Answer)
 		}
 
 	})

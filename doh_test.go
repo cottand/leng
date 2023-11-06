@@ -58,7 +58,7 @@ func dohTest(t *testing.T, handler dns.Handler, doTest func(r Resolver, bind str
 	defer func() {
 		loggingState.cleanUp()
 	}()
-	doh, err := NewServerHTTPS(handler, config.Bind, time.Second*5, time.Second*5, nil)
+	doh, err := NewServerHTTPS(handler, bind, time.Second*5, time.Second*5, nil)
 	defer doh.Shutdown()
 
 	if err != nil {
