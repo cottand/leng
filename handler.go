@@ -325,6 +325,7 @@ func (h *EventLoop) doRequest(Net string, w dns.ResponseWriter, req *dns.Msg) {
 
 // determines if resp contains no A records but some CNAME record
 func canFollow(req *dns.Msg, resp *dns.Msg) (cnames []*dns.CNAME, ok bool) {
+	// RFC-1034: only follow non-CNAME queries
 	if req.Question[0].Qtype == dns.TypeCNAME {
 		return []*dns.CNAME{}, false
 	}
