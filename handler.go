@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/cottand/grimd/internal/metric"
 	"net"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -103,6 +104,7 @@ func (h *EventLoop) do() {
 	}
 }
 
+// responseFor has side-effects, like writing to h's caches, so avoid calling it concurrently
 func (h *EventLoop) responseFor(Net string, req *dns.Msg, remote net.IP) (_ *dns.Msg, success bool) {
 	q := req.Question[0]
 	Q := Question{UnFqdn(q.Name), dns.TypeToString[q.Qtype], dns.ClassToString[q.Qclass]}
@@ -286,9 +288,47 @@ func (h *EventLoop) doRequest(Net string, w dns.ResponseWriter, req *dns.Msg) {
 		m.SetRcode(req, dns.RcodeServerFailure)
 		WriteReplyMsg(w, m)
 		metric.ReportDNSResponse(w, m, false)
-	} else {
-		WriteReplyMsg(w, resp)
+		return
 	}
+
+	depthSoFar := uint32(0)
+	for cnames, ok := canFollow(resp); h.config.FollowCnameDepth > depthSoFar && ok; {
+		for _, cname := range cnames {
+			r := dns.Msg{}
+			r.SetQuestion(cname.Target, req.Question[0].Qtype)
+			followed, ok := h.responseFor(Net, &r, remote)
+			if ok {
+				resp.Answer = append(resp.Answer, followed.Answer...)
+			}
+			depthSoFar++
+		}
+	}
+
+	WriteReplyMsg(w, resp)
+
+}
+
+// determines if resp contains no A records but some CNAME record
+func canFollow(resp *dns.Msg) (cnames []dns.CNAME, ok bool) {
+
+	isAnswer := func(rr dns.RR) bool {
+		return rr.Header().Rrtype == dns.TypeA && rr.Header().Rrtype == dns.TypeAAAA
+	}
+
+	isCname := func(rr dns.RR) bool {
+		return rr.Header().Rrtype == dns.TypeCNAME
+	}
+
+	for _, rr := range resp.Answer {
+		if asCname, ok := rr.(*dns.CNAME); isCname(rr) && ok {
+			cnames = append(cnames, *asCname)
+		}
+	}
+
+	ok = !slices.ContainsFunc(resp.Answer, isAnswer) && slices.ContainsFunc(resp.Answer, isCname)
+
+	return cnames, ok
+
 }
 
 // DoTCP begins a tcp query
