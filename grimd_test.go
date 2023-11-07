@@ -41,6 +41,7 @@ func integrationTest(changeConfig func(c *Config), test func(client *dns.Client,
 
 	go startActivation(actChannel, quitActivation, config.ReactivationDelay)
 	grimdActivation = <-actChannel
+	grimdActive = true
 	close(actChannel)
 
 	server := &Server{
@@ -52,6 +53,9 @@ func integrationTest(changeConfig func(c *Config), test func(client *dns.Client,
 
 	// BlockCache contains all blocked domains
 	blockCache := &MemoryBlockCache{Backend: make(map[string]bool)}
+	for _, blocked := range config.Blocklist {
+		_ = blockCache.Set(blocked, true)
+	}
 	// QuestionCache contains all queries to the dns server
 	questionCache := makeQuestionCache(config.QuestionCacheCap)
 
@@ -162,10 +166,10 @@ func TestCnameFollowHappyPath(t *testing.T) {
 		func(c *Config) {
 			c.CustomDNSRecords = []string{
 				"first.com          IN  CNAME  second.com  ",
-				"second.com         IN  CNAME  first.com   ",
+				"second.com         IN  CNAME  third.com   ",
 				"third.com          IN  A      10.10.0.42  ",
 			}
-
+			c.Timeout = 10000
 		},
 		func(client *dns.Client, target string) {
 			c := new(dns.Client)
@@ -175,8 +179,7 @@ func TestCnameFollowHappyPath(t *testing.T) {
 			m.SetQuestion(dns.Fqdn("first.com"), dns.TypeA)
 			reply, _, err := c.Exchange(m, target)
 			if err != nil {
-				t.Error(err)
-				t.FailNow()
+				t.Fatalf("failed to exchange %v", err)
 			}
 			if l := len(reply.Answer); l != 3 {
 				t.Fatalf("Expected 3 returned records but had %v: %v", l, reply.Answer)
@@ -195,10 +198,9 @@ func TestCnameFollowWithBlocked(t *testing.T) {
 		func(c *Config) {
 			c.CustomDNSRecords = []string{
 				"first.com          IN  CNAME  second.com  ",
-				"second.com         IN  CNAME  first.com   ",
-				"third.com          IN  A      10.10.0.42  ",
+				"second.com         IN  CNAME  example.com   ",
 			}
-			c.Blocklist = []string{"second.com"}
+			c.Blocklist = []string{"example.com"}
 
 		},
 		func(client *dns.Client, target string) {
@@ -212,8 +214,8 @@ func TestCnameFollowWithBlocked(t *testing.T) {
 				t.Error(err)
 				t.FailNow()
 			}
-			if slices.ContainsFunc(reply.Answer, contains("10.10.0.42")) {
-				t.Fatalf("Expected right A address to be blocked, but got %v", reply.Answer[0])
+			if !slices.ContainsFunc(reply.Answer, contains("0.0.0.0")) {
+				t.Fatalf("Expected right A address to be blocked, but got \n%v", reply.String())
 			}
 		},
 	)

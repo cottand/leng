@@ -9,17 +9,16 @@ import (
 
 // Server type
 type Server struct {
-	host                  string
-	rTimeout              time.Duration
-	wTimeout              time.Duration
-	eventLoop             *EventLoop
-	udpServer             *dns.Server
-	tcpServer             *dns.Server
-	httpServer            *ServerHTTPS
-	udpHandler            *dns.ServeMux
-	tcpHandler            *dns.ServeMux
-	httpHandler           *dns.ServeMux
-	activeHandlerPatterns []string
+	host        string
+	rTimeout    time.Duration
+	wTimeout    time.Duration
+	eventLoop   *EventLoop
+	udpServer   *dns.Server
+	tcpServer   *dns.Server
+	httpServer  *ServerHTTPS
+	udpHandler  *dns.ServeMux
+	tcpHandler  *dns.ServeMux
+	httpHandler *dns.ServeMux
 }
 
 // Run starts the server
@@ -39,17 +38,6 @@ func (s *Server) Run(
 
 	httpHandler := dns.NewServeMux()
 	httpHandler.HandleFunc(".", s.eventLoop.DoHTTP)
-
-	handlerPatterns := make([]string, len(config.CustomDNSRecords))
-
-	for _, record := range NewCustomDNSRecordsFromText(config.CustomDNSRecords) {
-		dnsHandler := record.asHandler()
-		tcpHandler.HandleFunc(record.name, dnsHandler)
-		udpHandler.HandleFunc(record.name, dnsHandler)
-		httpHandler.HandleFunc(record.name, dnsHandler)
-		handlerPatterns = append(handlerPatterns, record.name)
-	}
-	s.activeHandlerPatterns = handlerPatterns
 
 	s.tcpHandler = tcpHandler
 	s.udpHandler = udpHandler
@@ -133,31 +121,7 @@ func (s *Server) Stop() {
 
 // ReloadConfig only supports reloading the customDnsRecords section of the config for now
 func (s *Server) ReloadConfig(config *Config) {
-	oldRecords := s.activeHandlerPatterns
 	newRecords := NewCustomDNSRecordsFromText(config.CustomDNSRecords)
-	newRecordsPatterns := make([]string, len(newRecords))
-	for _, r := range newRecords {
-		newRecordsPatterns = append(newRecordsPatterns, r.name)
-	}
-	if testEq(oldRecords, newRecordsPatterns) {
-		// no changes - nothing to reload
-		return
-	}
+	s.eventLoop.customDns = NewCustomRecordsResolver(newRecords)
 	defer metric.CustomDNSConfigReload.Inc()
-
-	deletedRecords := difference(oldRecords, newRecordsPatterns)
-
-	for _, deleted := range deletedRecords {
-		s.tcpHandler.HandleRemove(deleted)
-		s.udpHandler.HandleRemove(deleted)
-		s.httpHandler.HandleRemove(deleted)
-	}
-
-	for _, record := range newRecords {
-		dnsHandler := record.asHandler()
-		s.tcpHandler.HandleFunc(record.name, dnsHandler)
-		s.udpHandler.HandleFunc(record.name, dnsHandler)
-		s.httpHandler.HandleFunc(record.name, dnsHandler)
-	}
-	s.activeHandlerPatterns = newRecordsPatterns
 }

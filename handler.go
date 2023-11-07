@@ -49,6 +49,7 @@ type EventLoop struct {
 	config        *Config
 	blockCache    *MemoryBlockCache
 	questionCache *MemoryQuestionCache
+	customDns     *CustomRecordsResolver
 }
 
 // DNSOperationData type
@@ -87,6 +88,7 @@ func NewEventLoop(config *Config, blockCache *MemoryBlockCache, questionCache *M
 		questionCache:  questionCache,
 		active:         true,
 		config:         config,
+		customDns:      NewCustomRecordsResolver(NewCustomDNSRecordsFromText(config.CustomDNSRecords)),
 	}
 
 	go handler.do()
@@ -105,7 +107,20 @@ func (h *EventLoop) do() {
 }
 
 // responseFor has side-effects, like writing to h's caches, so avoid calling it concurrently
-func (h *EventLoop) responseFor(Net string, req *dns.Msg, remote net.IP) (_ *dns.Msg, success bool) {
+func (h *EventLoop) responseFor(Net string, req *dns.Msg, _local net.Addr, _remote net.Addr) (_ *dns.Msg, success bool) {
+
+	var remote net.IP
+	if Net == "tcp" || Net == "http" {
+		remote = _remote.(*net.TCPAddr).IP
+	} else {
+		remote = _remote.(*net.UDPAddr).IP
+	}
+
+	// first of all, check custom DNS. No need to cache it because it is already in-mem and precedes the blocking
+	if custom := h.customDns.Resolve(req, _local, _remote); custom != nil {
+		return custom, true
+	}
+
 	q := req.Question[0]
 	Q := Question{UnFqdn(q.Name), dns.TypeToString[q.Qtype], dns.ClassToString[q.Qclass]}
 	logger.Infof("%s lookup　%s\n", remote, Q.String())
@@ -272,16 +287,7 @@ func (h *EventLoop) doRequest(Net string, w dns.ResponseWriter, req *dns.Msg) {
 		}
 	}(w)
 
-	var remote net.IP
-	if Net == "tcp" {
-		remote = w.RemoteAddr().(*net.TCPAddr).IP
-	} else if Net == "http" {
-		remote = w.RemoteAddr().(*net.TCPAddr).IP
-	} else {
-		remote = w.RemoteAddr().(*net.UDPAddr).IP
-	}
-
-	resp, ok := h.responseFor(Net, req, remote)
+	resp, ok := h.responseFor(Net, req, w.LocalAddr(), w.RemoteAddr())
 
 	if !ok {
 		m := new(dns.Msg)
@@ -292,15 +298,24 @@ func (h *EventLoop) doRequest(Net string, w dns.ResponseWriter, req *dns.Msg) {
 	}
 
 	depthSoFar := uint32(0)
-	for cnames, ok := canFollow(resp); h.config.FollowCnameDepth > depthSoFar && ok; {
+	for h.config.FollowCnameDepth > depthSoFar {
+		cnames, ok := canFollow(req, resp)
+		depthSoFar++
+		if !ok {
+			break
+		}
 		for _, cname := range cnames {
 			r := dns.Msg{}
 			r.SetQuestion(cname.Target, req.Question[0].Qtype)
-			followed, ok := h.responseFor(Net, &r, remote)
-			if ok {
-				resp.Answer = append(resp.Answer, followed.Answer...)
+			followed, ok := h.responseFor(Net, &r, w.LocalAddr(), w.RemoteAddr())
+			for _, fAnswer := range followed.Answer {
+				containsNewAnswer := func(rr dns.RR) bool {
+					return rr.String() == fAnswer.String()
+				}
+				if ok && !slices.ContainsFunc(resp.Answer, containsNewAnswer) {
+					resp.Answer = append(resp.Answer, fAnswer)
+				}
 			}
-			depthSoFar++
 		}
 	}
 
@@ -309,27 +324,33 @@ func (h *EventLoop) doRequest(Net string, w dns.ResponseWriter, req *dns.Msg) {
 }
 
 // determines if resp contains no A records but some CNAME record
-func canFollow(resp *dns.Msg) (cnames []dns.CNAME, ok bool) {
+func canFollow(req *dns.Msg, resp *dns.Msg) (cnames []*dns.CNAME, ok bool) {
+	if req.Question[0].Qtype == dns.TypeCNAME {
+		return []*dns.CNAME{}, false
+	}
 
-	isAnswer := func(rr dns.RR) bool {
-		return rr.Header().Rrtype == dns.TypeA && rr.Header().Rrtype == dns.TypeAAAA
+	isA := func(rr dns.RR) bool {
+		return rr.Header().Rrtype == dns.TypeA || rr.Header().Rrtype == dns.TypeAAAA
 	}
 
 	isCname := func(rr dns.RR) bool {
 		return rr.Header().Rrtype == dns.TypeCNAME
 	}
 
+	ok = !slices.ContainsFunc(resp.Answer, isA) && slices.ContainsFunc(resp.Answer, isCname)
 	for _, rr := range resp.Answer {
 		if asCname, ok := rr.(*dns.CNAME); isCname(rr) && ok {
-			cnames = append(cnames, *asCname)
+			cnames = append(cnames, asCname)
 		}
 	}
 
-	ok = !slices.ContainsFunc(resp.Answer, isAnswer) && slices.ContainsFunc(resp.Answer, isCname)
-
-	return cnames, ok
-
+	return cnames, ok && len(cnames) != 0
 }
+
+// msg:
+// Q: A   fst.com
+// A: CN  snd.com, thrd.com
+//
 
 // DoTCP begins a tcp query
 func (h *EventLoop) DoTCP(w dns.ResponseWriter, req *dns.Msg) {
