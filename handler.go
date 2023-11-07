@@ -103,26 +103,10 @@ func (h *EventLoop) do() {
 	}
 }
 
-func (h *EventLoop) doRequest(Net string, w dns.ResponseWriter, req *dns.Msg) {
-	defer func(w dns.ResponseWriter) {
-		err := w.Close()
-		if err != nil {
-		}
-	}(w)
+func (h *EventLoop) responseFor(Net string, req *dns.Msg, remote net.IP) (_ *dns.Msg, success bool) {
 	q := req.Question[0]
 	Q := Question{UnFqdn(q.Name), dns.TypeToString[q.Qtype], dns.ClassToString[q.Qclass]}
-
-	var remote net.IP
-	if Net == "tcp" {
-		remote = w.RemoteAddr().(*net.TCPAddr).IP
-	} else if Net == "http" {
-		remote = w.RemoteAddr().(*net.TCPAddr).IP
-	} else {
-		remote = w.RemoteAddr().(*net.UDPAddr).IP
-	}
-
 	logger.Infof("%s lookup　%s\n", remote, Q.String())
-
 	var grimdActive = grimdActivation.query()
 	if len(h.config.ToggleName) > 0 && strings.Contains(Q.Qname, h.config.ToggleName) {
 		logger.Noticef("Found ToggleName! (%s)\n", Q.Qname)
@@ -146,8 +130,7 @@ func (h *EventLoop) doRequest(Net string, w dns.ResponseWriter, req *dns.Msg) {
 				logger.Debugf("%s didn't hit cache\n", Q.String())
 			} else {
 				logger.Debugf("%s hit negative cache\n", Q.String())
-				h.HandleFailed(w, req)
-				return
+				return nil, false
 			}
 		} else {
 			if blocked && !grimdActive {
@@ -158,9 +141,9 @@ func (h *EventLoop) doRequest(Net string, w dns.ResponseWriter, req *dns.Msg) {
 				// we need this copy against concurrent modification of ID
 				msg := *mesg
 				msg.Id = req.Id
-				WriteReplyMsg(w, &msg)
-				metric.ReportDNSResponse(w, &msg, blocked)
-				return
+
+				defer metric.ReportDNSRespond(remote, &msg, blocked)
+				return &msg, true
 			}
 		}
 	}
@@ -202,8 +185,7 @@ func (h *EventLoop) doRequest(Net string, w dns.ResponseWriter, req *dns.Msg) {
 				}
 			}
 
-			WriteReplyMsg(w, m)
-			metric.ReportDNSResponse(w, m, true)
+			defer metric.ReportDNSRespond(remote, m, true)
 
 			logger.Noticef("%s found in blocklist\n", Q.Qname)
 
@@ -217,7 +199,7 @@ func (h *EventLoop) doRequest(Net string, w dns.ResponseWriter, req *dns.Msg) {
 				logger.Errorf("Set %s block cache failed: %s\n", Q.String(), err.Error())
 			}
 
-			return
+			return m, true
 		}
 		logger.Debugf("%s not found in blocklist\n", Q.Qname)
 	}
@@ -230,26 +212,24 @@ func (h *EventLoop) doRequest(Net string, w dns.ResponseWriter, req *dns.Msg) {
 
 	if err != nil {
 		logger.Errorf("resolve query error %s\n", err)
-		h.HandleFailed(w, req)
 
 		// cache the failure, too!
 		if err = h.negCache.Set(key, nil, false); err != nil {
 			logger.Errorf("set %s negative cache failed: %v\n", Q.String(), err)
 		}
-		return
+		return nil, false
 	}
 
 	if mesg.Truncated && Net == "udp" {
 		mesg, err = h.resolver.Lookup("tcp", req, h.config.Timeout, h.config.Interval, h.config.Nameservers, h.config.DoH)
 		if err != nil {
 			logger.Errorf("resolve tcp query error %s\n", err)
-			h.HandleFailed(w, req)
 
 			// cache the failure, too!
 			if err = h.negCache.Set(key, nil, false); err != nil {
 				logger.Errorf("set %s negative cache failed: %v\n", Q.String(), err)
 			}
-			return
+			return nil, false
 		}
 	}
 
@@ -267,8 +247,7 @@ func (h *EventLoop) doRequest(Net string, w dns.ResponseWriter, req *dns.Msg) {
 		}
 	}
 
-	WriteReplyMsg(w, mesg)
-	metric.ReportDNSResponse(w, mesg, false)
+	defer metric.ReportDNSRespond(remote, mesg, false)
 
 	if IPQuery > 0 && len(mesg.Answer) > 0 {
 		if !grimdActive && blacklisted {
@@ -280,6 +259,35 @@ func (h *EventLoop) doRequest(Net string, w dns.ResponseWriter, req *dns.Msg) {
 			}
 			logger.Debugf("insert %s into cache with ttl %d\n", Q.String(), ttl)
 		}
+	}
+	return mesg, true
+}
+
+func (h *EventLoop) doRequest(Net string, w dns.ResponseWriter, req *dns.Msg) {
+	defer func(w dns.ResponseWriter) {
+		err := w.Close()
+		if err != nil {
+		}
+	}(w)
+
+	var remote net.IP
+	if Net == "tcp" {
+		remote = w.RemoteAddr().(*net.TCPAddr).IP
+	} else if Net == "http" {
+		remote = w.RemoteAddr().(*net.TCPAddr).IP
+	} else {
+		remote = w.RemoteAddr().(*net.UDPAddr).IP
+	}
+
+	resp, ok := h.responseFor(Net, req, remote)
+
+	if !ok {
+		m := new(dns.Msg)
+		m.SetRcode(req, dns.RcodeServerFailure)
+		WriteReplyMsg(w, m)
+		metric.ReportDNSResponse(w, m, false)
+	} else {
+		WriteReplyMsg(w, resp)
 	}
 }
 
@@ -307,14 +315,6 @@ func (h *EventLoop) DoHTTP(w dns.ResponseWriter, req *dns.Msg) {
 	if h.active {
 		h.requestChannel <- DNSOperationData{"http", w, req}
 	}
-}
-
-// HandleFailed handles dns failures
-func (h *EventLoop) HandleFailed(w dns.ResponseWriter, message *dns.Msg) {
-	m := new(dns.Msg)
-	m.SetRcode(message, dns.RcodeServerFailure)
-	WriteReplyMsg(w, m)
-	metric.ReportDNSResponse(w, m, false)
 }
 
 // WriteReplyMsg writes the dns reply
