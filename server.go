@@ -12,7 +12,7 @@ type Server struct {
 	host                  string
 	rTimeout              time.Duration
 	wTimeout              time.Duration
-	handler               *DNSHandler
+	eventLoop             *EventLoop
 	udpServer             *dns.Server
 	tcpServer             *dns.Server
 	httpServer            *ServerHTTPS
@@ -29,21 +29,21 @@ func (s *Server) Run(
 	questionCache *MemoryQuestionCache,
 ) {
 
-	s.handler = NewHandler(config, blockCache, questionCache)
+	s.eventLoop = NewEventLoop(config, blockCache, questionCache)
 
 	tcpHandler := dns.NewServeMux()
-	tcpHandler.HandleFunc(".", s.handler.DoTCP)
+	tcpHandler.HandleFunc(".", s.eventLoop.DoTCP)
 
 	udpHandler := dns.NewServeMux()
-	udpHandler.HandleFunc(".", s.handler.DoUDP)
+	udpHandler.HandleFunc(".", s.eventLoop.DoUDP)
 
 	httpHandler := dns.NewServeMux()
-	httpHandler.HandleFunc(".", s.handler.DoHTTP)
+	httpHandler.HandleFunc(".", s.eventLoop.DoHTTP)
 
 	handlerPatterns := make([]string, len(config.CustomDNSRecords))
 
 	for _, record := range NewCustomDNSRecordsFromText(config.CustomDNSRecords) {
-		dnsHandler := record.serve(s.handler)
+		dnsHandler := record.asHandler()
 		tcpHandler.HandleFunc(record.name, dnsHandler)
 		udpHandler.HandleFunc(record.name, dnsHandler)
 		httpHandler.HandleFunc(record.name, dnsHandler)
@@ -104,11 +104,11 @@ func (s *Server) startHttp(addr string) {
 
 // Stop stops the server
 func (s *Server) Stop() {
-	if s.handler != nil {
-		s.handler.muActive.Lock()
-		s.handler.active = false
-		close(s.handler.requestChannel)
-		s.handler.muActive.Unlock()
+	if s.eventLoop != nil {
+		s.eventLoop.muActive.Lock()
+		s.eventLoop.active = false
+		close(s.eventLoop.requestChannel)
+		s.eventLoop.muActive.Unlock()
 	}
 	if s.udpServer != nil {
 		err := s.udpServer.Shutdown()
@@ -154,7 +154,7 @@ func (s *Server) ReloadConfig(config *Config) {
 	}
 
 	for _, record := range newRecords {
-		dnsHandler := record.serve(s.handler)
+		dnsHandler := record.asHandler()
 		s.tcpHandler.HandleFunc(record.name, dnsHandler)
 		s.udpHandler.HandleFunc(record.name, dnsHandler)
 		s.httpHandler.HandleFunc(record.name, dnsHandler)

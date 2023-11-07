@@ -91,7 +91,7 @@ func (s *ServerHTTPS) Stop() error {
 	return nil
 }
 
-// ServeHTTP is the handler that gets the HTTP request and converts to the dns format, calls the resolver,
+// ServeHTTP is the eventLoop that gets the HTTP request and converts to the dns format, calls the resolver,
 // converts it back and write it to the client.
 func (s *ServerHTTPS) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if !(r.URL.Path == pathDOH) {
@@ -195,7 +195,7 @@ type DohResponseWriter struct {
 
 // See section 4.2.1 of RFC 8484.
 // We are using code 500 to indicate an unexpected situation when the chain
-// handler has not provided any response message.
+// eventLoop has not provided any response message.
 func (w *DohResponseWriter) handleErr(err error) {
 	logger.Warningf("error when replying to DoH: %v", err)
 	http.Error(w.delegate, "No response", http.StatusInternalServerError)

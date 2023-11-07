@@ -69,8 +69,12 @@ func (r *Resolver) Lookup(net string, req *dns.Msg, timeout int, interval int, n
 
 	}
 
+	clientNet := net
+	if net == "http" {
+		clientNet = "tcp"
+	}
 	c := &dns.Client{
-		Net:          net,
+		Net:          clientNet,
 		ReadTimeout:  time.Duration(timeout) * time.Second,
 		WriteTimeout: time.Duration(timeout) * time.Second,
 	}

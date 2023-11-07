@@ -17,7 +17,7 @@ func dnsAQuestion(question string) (msg *dns.Msg) {
 func TestDohHappyPath(t *testing.T) {
 	handler := dns.NewServeMux()
 	custom := NewCustomDNSRecordsFromText([]string{"example.com.   IN A   10.0.0.0 "})
-	handler.HandleFunc("example.com", custom[0].serve(nil))
+	handler.HandleFunc("example.com", custom[0].asHandler())
 
 	dohTest(t, handler, func(r Resolver, bind string) {
 		response, err := r.DoHLookup("http://"+bind+"/dns-query", 1, dnsAQuestion("example.com."))
@@ -36,7 +36,7 @@ func TestDohHappyPath(t *testing.T) {
 func TestDoh404(t *testing.T) {
 	handler := dns.NewServeMux()
 	custom := NewCustomDNSRecordsFromText([]string{"example.com A 10.0.0.0"})
-	handler.HandleFunc("example.com", custom[0].serve(nil))
+	handler.HandleFunc("example.com", custom[0].asHandler())
 
 	dohTest(t, handler, func(r Resolver, bind string) {
 		resp, err := http.Get("http://" + bind + "/unknown-path")
