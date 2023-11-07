@@ -121,7 +121,7 @@ func (s *ServerHTTPS) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func countResponse(status int) {
-	metric.DohResponseCount.With(prometheus.Labels{"status": fmt.Sprint(status)})
+	metric.DohResponseCount.With(prometheus.Labels{"status": fmt.Sprint(status)}).Inc()
 }
 
 // Shutdown stops the server (non gracefully).
