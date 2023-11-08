@@ -81,3 +81,13 @@ func ReportDNSResponse(w dns.ResponseWriter, message *dns.Msg, blocked bool) {
 		"blocked":   strconv.FormatBool(blocked),
 	}).Inc()
 }
+func ReportDNSRespond(remote net.IP, message *dns.Msg, blocked bool) {
+	question := message.Question[0]
+	responseCounter.With(prometheus.Labels{
+		"remote_ip": remote.String(),
+		"q_type":    dns.Type(question.Qtype).String(),
+		"q_name":    question.Name,
+		"rcode":     dns.RcodeToString[message.Rcode],
+		"blocked":   strconv.FormatBool(blocked),
+	}).Inc()
+}

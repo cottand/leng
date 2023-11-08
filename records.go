@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/cottand/grimd/internal/metric"
 	"github.com/miekg/dns"
+	"net"
 )
 
 type CustomDNSRecords struct {
@@ -46,14 +47,74 @@ func NewCustomDNSRecords(from map[string][]dns.RR) []CustomDNSRecords {
 	return records
 }
 
-func (records CustomDNSRecords) serve(serverHandler *DNSHandler) func(dns.ResponseWriter, *dns.Msg) {
+func (records CustomDNSRecords) asHandler() func(dns.ResponseWriter, *dns.Msg) {
 	return func(writer dns.ResponseWriter, req *dns.Msg) {
 		m := new(dns.Msg)
 		m.SetReply(req)
 		m.Answer = append(m.Answer, records.answer...)
 
-		serverHandler.WriteReplyMsg(writer, m)
+		WriteReplyMsg(writer, m)
 		metric.RequestCustomCounter.Inc()
 		metric.ReportDNSResponse(writer, m, false)
 	}
+}
+
+// CustomRecordsResolver allows faking an in-mem DNS server just for custom records
+type CustomRecordsResolver struct {
+	mux *dns.ServeMux
+}
+
+func NewCustomRecordsResolver(records []CustomDNSRecords) *CustomRecordsResolver {
+	mux := dns.NewServeMux()
+	for _, r := range records {
+		mux.HandleFunc(r.name, r.asHandler())
+	}
+	return &CustomRecordsResolver{mux}
+}
+
+// Resolve returns nil when there was no result found
+func (r *CustomRecordsResolver) Resolve(req *dns.Msg, local net.Addr, remote net.Addr) *dns.Msg {
+	writer := roResponseWriter{local: local, remote: remote}
+	r.mux.ServeDNS(&writer, req)
+	if writer.result.Rcode == dns.RcodeRefused {
+		return nil
+	} else {
+		return writer.result
+	}
+}
+
+// roResponseWriter implements dns.ResponseWriter,
+// but does not allow calling any method with
+// side effects.
+// It allows wrapping a dns.ResponseWriter in order
+// to recover the final written dns.Msg
+type roResponseWriter struct {
+	local  net.Addr
+	remote net.Addr
+	result *dns.Msg
+}
+
+func (w *roResponseWriter) LocalAddr() net.Addr {
+	return w.local
+}
+
+func (w *roResponseWriter) RemoteAddr() net.Addr {
+	return w.remote
+}
+
+func (w *roResponseWriter) WriteMsg(msg *dns.Msg) error {
+	w.result = msg
+	return nil
+}
+func (w *roResponseWriter) Write([]byte) (int, error) {
+	return 0, nil
+}
+func (w *roResponseWriter) Close() error {
+	return nil
+}
+func (w *roResponseWriter) TsigStatus() error {
+	return nil
+}
+func (w *roResponseWriter) TsigTimersOnly(_ bool) {}
+func (w *roResponseWriter) Hijack() {
 }

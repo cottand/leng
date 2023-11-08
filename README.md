@@ -12,7 +12,7 @@ Forked from [looterz/grimd](https://github.com/looterz/grimd)
 - [x] DNS over TCP
 - [x] DNS over HTTP(S) (DoH as per [RFC-8484](https://datatracker.ietf.org/doc/html/rfc8484))
 - [x] Prometheus metrics API
-- [x] Custom DNS records supports
+- [x] Custom DNS records support
 - [x] Blocklist fetching
 - [x] Hardcoded blocklist config
 - [x] Hardcoded whitelist config
@@ -56,7 +56,7 @@ Usage of grimd:
 ```
 
 # Building
-Requires golang 1.7 or higher, you build grimd like any other golang application, for example to build for linux x64
+Requires golang 1.20 or higher, you build grimd like any other golang application, for example to build for linux x64
 ```shell
 env GOOS=linux GOARCH=amd64 go build -v github.com/cottand/grimd
 ```
@@ -76,19 +76,19 @@ curl -H "Accept: application/json" http://127.0.0.1:55006/application/active
 ```
 
 # Speed
-Incoming requests spawn a goroutine and are served concurrently, and the block cache resides in-memory to allow for rapid lookups, while answered queries are cached allowing grimd to serve thousands of queries at once while maintaining a memory footprint of under 15mb for 100,000 blocked domains!
+Incoming requests spawn a goroutine and are served concurrently, and the block cache resides in-memory to allow for rapid lookups, while answered queries are cached allowing grimd to serve thousands of queries at once while maintaining a memory footprint of under 30mb for 100,000 blocked domains!
 
 # Daemonize
 You can find examples of different daemon scripts for grimd on the [wiki](https://github.com/looterz/grimd/wiki/Daemon-Scripts).
 
 # Objectives 
 
-These are some of the things I would like to contribute in this fork:
 - [x] ~~ARM64 Docker builds~~
 - [ ] Better custom DNS support
   - [x] ~~Dynamic config reload for custom DNS issue#16~~
   - [x] ~~Fix multi-record responses issue#5~~
-  - [ ] DNS record flattening issue#1
+  - [x] ~~DNS record CNAME following issue#1~~
+  - [ ] DNS record CNAME flattening a la cloudflare issue#27
   - [ ] Service discovery integrations? issue#4
 - [x] Prometheus metrics exporter issue#3
 - [x] DNS over HTTPS #2

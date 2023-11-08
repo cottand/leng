@@ -46,6 +46,7 @@ type Config struct {
 	DoH               string
 	Metrics           Metrics `toml:"metrics"`
 	DnsOverHttpServer DnsOverHttpServer
+	FollowCnameDepth  uint32
 }
 
 type Metrics struct {
@@ -161,6 +162,12 @@ reactivationdelay = 300
 
 # Dns over HTTPS upstream provider to use
 DoH = "https://cloudflare-dns.com/dns-query"
+
+# How deep to follow chains of CNAME records
+# set to 0 to disable CNAME-following entirely
+# (anything more than 10 should be more than plenty)
+# see https://github.com/Cottand/grimd/wiki/CNAME%E2%80%90following-DNS
+followCnameDepth = 12
 
 # Prometheus metrics - disabled by default
 [Metrics]
