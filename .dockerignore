@@ -1,3 +1,7 @@
 docker
 .github
-.goreleaser.yaml
+flake.lock
+flake.nix
+sources
+README.md
+Makefile
