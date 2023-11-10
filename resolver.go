@@ -3,7 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"github.com/cottand/grimd/internal/metric"
+	"github.com/cottand/leng/internal/metric"
 	"github.com/prometheus/client_golang/prometheus"
 	"io"
 	"net/http"

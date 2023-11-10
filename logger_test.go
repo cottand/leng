@@ -20,11 +20,11 @@ func TestLogConfigParsing(t *testing.T) {
 		err error
 	}{
 		{
-			in: "file:grimd.log@0",
+			in: "file:leng.log@0",
 			out: &logConfig{
 				files: []fileConfig{
 					{
-						name:  "grimd.log",
+						name:  "leng.log",
 						level: logging.WARNING,
 					},
 				},
@@ -32,11 +32,11 @@ func TestLogConfigParsing(t *testing.T) {
 			err: nil,
 		},
 		{
-			in: "file:grimd.log@0,file:something.log@1",
+			in: "file:leng.log@0,file:something.log@1",
 			out: &logConfig{
 				files: []fileConfig{
 					{
-						name:  "grimd.log",
+						name:  "leng.log",
 						level: logging.WARNING,
 					},
 					{
@@ -48,9 +48,9 @@ func TestLogConfigParsing(t *testing.T) {
 			err: nil,
 		},
 		{
-			in:  "file:grimd.log@aa",
+			in:  "file:leng.log@aa",
 			out: nil,
-			err: fmt.Errorf("error while parsing 'file:grimd.log@aa': 'aa' is not an integer"),
+			err: fmt.Errorf("error while parsing 'file:leng.log@aa': 'aa' is not an integer"),
 		},
 		{
 			in:  "syslog@aa",
@@ -58,9 +58,9 @@ func TestLogConfigParsing(t *testing.T) {
 			err: fmt.Errorf("error while parsing 'syslog@aa': 'aa' is not an integer"),
 		},
 		{
-			in:  "fail:grimd.log@1",
+			in:  "fail:leng.log@1",
 			out: nil,
-			err: fmt.Errorf("error: uknown log config fragment: 'fail:grimd.log@1'"),
+			err: fmt.Errorf("error: uknown log config fragment: 'fail:leng.log@1'"),
 		},
 		{
 			in: "syslog@0",
@@ -73,11 +73,11 @@ func TestLogConfigParsing(t *testing.T) {
 			err: nil,
 		},
 		{
-			in: "file:grimd.log@1,syslog@1",
+			in: "file:leng.log@1,syslog@1",
 			out: &logConfig{
 				files: []fileConfig{
 					{
-						name:  "grimd.log",
+						name:  "leng.log",
 						level: logging.INFO,
 					},
 				},
@@ -99,11 +99,11 @@ func TestLogConfigParsing(t *testing.T) {
 			err: nil,
 		},
 		{
-			in: "file:grimd.log@2,syslog@1,stderr@0",
+			in: "file:leng.log@2,syslog@1,stderr@0",
 			out: &logConfig{
 				files: []fileConfig{
 					{
-						name:  "grimd.log",
+						name:  "leng.log",
 						level: logging.DEBUG,
 					},
 				},

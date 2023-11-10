@@ -1,12 +1,12 @@
-# grimd
+# leng
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/cottand/grimd?style=flat-square)](https://goreportcard.com/report/github.com/cottand/grimd)
-[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg?style=flat-square)](http://godoc.org/github.com/cottand/grimd)
-[![Release](https://github.com/cottand/grimd/actions/workflows/release.yaml/badge.svg)](https://github.com/cottand/grimd/releases)
+[![Go Report Card](https://goreportcard.com/badge/github.com/cottand/leng?style=flat-square)](https://goreportcard.com/report/github.com/cottand/leng)
+[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg?style=flat-square)](http://godoc.org/github.com/cottand/leng)
+[![Release](https://github.com/cottand/leng/actions/workflows/release.yaml/badge.svg)](https://github.com/cottand/leng/releases)
 
 :zap: Fast dns proxy, built to black-hole internet advertisements and malware servers. Capable of custom DNS.
 
-Forked from [looterz/grimd](https://github.com/looterz/grimd)
+Forked from [looterz/leng](https://github.com/looterz/leng)
 
 # Features
 
@@ -24,34 +24,34 @@ Forked from [looterz/grimd](https://github.com/looterz/grimd)
 # Installation
 
 ```
-go install github.com/cottand/grimd@latest
+go install github.com/cottand/leng@latest
 ```
 
 You can also 
-- download one of the binary [releases](https://github.com/cottand/grimd/releases)
-- use the [Docker image](https://github.com/cottand/grimd/pkgs/container/grimd)
-    - `docker run -d -p 53:53/udp -p 53:53/tcp -p 8080:8080/tcp ghcr.io/cottand/grimd`
-- use [Docker compose YML](https://raw.githubusercontent.com/cottand/grimd/master/docker-compose.yml)
-- use the [Nix flake](https://github.com/Cottand/grimd/tree/master/flake.nix)
-    - `nix run github:cottand/grimd`
+- download one of the binary [releases](https://github.com/cottand/leng/releases)
+- use the [Docker image](https://github.com/cottand/leng/pkgs/container/leng)
+    - `docker run -d -p 53:53/udp -p 53:53/tcp -p 8080:8080/tcp ghcr.io/cottand/leng`
+- use [Docker compose YML](https://raw.githubusercontent.com/cottand/leng/master/docker-compose.yml)
+- use the [Nix flake](https://github.com/Cottand/leng/tree/master/flake.nix)
+    - `nix run github:cottand/leng`
 
-Detailed guides and resources can be found on the [wiki](https://github.com/cottand/grimd/wiki).
+Detailed guides and resources can be found on the [wiki](https://github.com/cottand/leng/wiki).
 
 # Configuration
 
-By default, grimd binds DNS to `0.0.0.0:53` and loads a few known blocklists. The default settings should be enough for
+By default, leng binds DNS to `0.0.0.0:53` and loads a few known blocklists. The default settings should be enough for
 most.
-See [the wiki](https://github.com/Cottand/grimd/wiki/Configuration) for the full config, including defaults and dynamic
+See [the wiki](https://github.com/Cottand/leng/wiki/Configuration) for the full config, including defaults and dynamic
 config reloading.
 
 ### CLI Flags
 
 ```bash
-$ grimd -help
+$ leng -help
 
-Usage of grimd:
+Usage of leng:
   -config string
-    	location of the config file (default "grimd.toml")
+    	location of the config file (default "leng.toml")
   -update
     	force an update of the blocklist database
 
@@ -59,10 +59,10 @@ Usage of grimd:
 
 # Building
 
-Requires golang 1.21 or higher, you build grimd like any other golang application, for example to build for linux x64
+Requires golang 1.21 or higher, you build leng like any other golang application, for example to build for linux x64
 
 ```shell
-env GOOS=linux GOARCH=amd64 go build -v github.com/cottand/grimd
+env GOOS=linux GOARCH=amd64 go build -v github.com/cottand/leng
 ```
 
 # Building Docker
@@ -71,8 +71,8 @@ Run container and test
 
 ```shell
 mkdir sources
-docker build -t grimd:latest -f docker/alpine.Dockerfile . && \
-docker run -v $PWD/sources:/sources --rm -it -P --name grimd-test grimd:latest --config /sources/grimd.toml --update
+docker build -t leng:latest -f docker/alpine.Dockerfile . && \
+docker run -v $PWD/sources:/sources --rm -it -P --name leng-test leng:latest --config /sources/leng.toml --update
 ```
 
 By default, if the program runs in a docker, it will automatically replace `127.0.0.1` in the default configuration
@@ -85,13 +85,13 @@ curl -H "Accept: application/json" http://127.0.0.1:55006/application/active
 # Speed
 
 Incoming requests spawn a goroutine and are served concurrently, and the block cache resides in-memory to allow for
-rapid lookups, while answered queries are cached allowing grimd to serve thousands of queries at once while maintaining
+rapid lookups, while answered queries are cached allowing leng to serve thousands of queries at once while maintaining
 a memory footprint of under 30mb for 100,000 blocked domains!
 
 # Daemonize
 
-You can find examples of different daemon scripts for grimd on
-the [wiki](https://github.com/looterz/grimd/wiki/Daemon-Scripts).
+You can find examples of different daemon scripts for leng on
+the [wiki](https://github.com/looterz/leng/wiki/Daemon-Scripts).
 
 # Objectives
 
@@ -108,7 +108,7 @@ the [wiki](https://github.com/looterz/grimd/wiki/Daemon-Scripts).
 
 ## Non-objectives
 
-**Not keeping it simple**: I would like grimd to become
+**Not keeping it simple**: I would like leng to become
 a reliable custom DNS provider (like CoreDNS) and a reliable
 adblocker (like Blocky) that has the perfect set of features
 for self-hosters, and potentially for more critical setups.

@@ -12,10 +12,10 @@ import (
 )
 
 var (
-	configPath      string
-	forceUpdate     bool
-	grimdActive     bool
-	grimdActivation *ActivationHandler
+	configPath     string
+	forceUpdate    bool
+	lengActive     bool
+	lengActivation *ActivationHandler
 )
 
 func reloadBlockCache(config *Config,
@@ -59,12 +59,12 @@ func main() {
 		loggingState.cleanUp()
 	}()
 
-	grimdActive = true
+	lengActive = true
 	quitActivation := make(chan bool)
 	actChannel := make(chan *ActivationHandler)
 
 	go startActivation(actChannel, quitActivation, config.ReactivationDelay)
-	grimdActivation = <-actChannel
+	lengActivation = <-actChannel
 	close(actChannel)
 
 	server := &Server{
@@ -80,7 +80,7 @@ func main() {
 
 	reloadChan := make(chan bool)
 
-	// The server will start with an empty blockcache soe we can dowload the lists if grimd is the
+	// The server will start with an empty blockcache soe we can dowload the lists if leng is the
 	// system's dns server.
 	server.Run(config, blockCache, questionCache)
 
@@ -127,7 +127,7 @@ forever:
 }
 
 func init() {
-	flag.StringVar(&configPath, "config", "grimd.toml", "location of the config file")
+	flag.StringVar(&configPath, "config", "leng.toml", "location of the config file")
 	flag.BoolVar(&forceUpdate, "update", false, "force an update of the blocklist database")
 
 	runtime.GOMAXPROCS(runtime.NumCPU())

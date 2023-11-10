@@ -218,7 +218,7 @@ func StartAPIServer(config *Config,
 	})
 
 	router.GET("/application/active", func(c *gin.Context) {
-		c.IndentedJSON(http.StatusOK, gin.H{"active": grimdActive})
+		c.IndentedJSON(http.StatusOK, gin.H{"active": lengActive})
 	})
 
 	// Handle the setting of active state.
@@ -234,20 +234,20 @@ func StartAPIServer(config *Config,
 		} else {
 			switch active {
 			case "On":
-				grimdActivation.set(true)
-				c.IndentedJSON(http.StatusOK, gin.H{"active": grimdActive})
+				lengActivation.set(true)
+				c.IndentedJSON(http.StatusOK, gin.H{"active": lengActive})
 			case "Off":
-				grimdActivation.set(false)
-				c.IndentedJSON(http.StatusOK, gin.H{"active": grimdActive})
+				lengActivation.set(false)
+				c.IndentedJSON(http.StatusOK, gin.H{"active": lengActive})
 			case "Snooze":
 				timeoutString := c.DefaultQuery("timeout", "300")
 				timeout, err := strconv.ParseUint(timeoutString, 0, 0)
 				if err != nil {
 					c.JSON(http.StatusBadRequest, gin.H{"error": "Illegal value for 'timeout'"})
 				} else {
-					grimdActivation.toggleOff(uint(timeout))
+					lengActivation.toggleOff(uint(timeout))
 					c.IndentedJSON(http.StatusOK, gin.H{
-						"active":  grimdActive,
+						"active":  lengActive,
 						"timeout": timeout,
 					})
 				}

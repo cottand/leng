@@ -1,5 +1,5 @@
 {
-  description = "Grimd, a fast dns proxy, built to black-hole internet advertisements and malware servers";
+  description = "Leng, a fast dns proxy, built to black-hole internet advertisements and malware servers";
 
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -12,34 +12,34 @@
         # Build & packaging
         ## use with `nix build`
         packages = rec {
-          grimd = pkgs.buildGo121Module {
+          leng = pkgs.buildGo121Module {
             inherit system;
             vendorSha256 = "sha256-5dIZzqaw88lKuh1JHJurRZCPgrNzDHK/53bXKNGQBvQ=";
-            pname = "grimd";
+            pname = "leng";
             version = "0.0.1-test";
             src = ./.;
           };
-          default = grimd;
+          default = leng;
         };
 
 
         # Dev environment
         ## use with `nix develop`
         devShells = rec {
-          grimd = pkgs.mkShell {
+          leng = pkgs.mkShell {
             packages = [ pkgs.fish pkgs.go_1_21 ];
             # Note that `shellHook` still uses bash syntax. This starts fish, then exists the bash shell when fish exits.
             shellHook = "fish && exit";
           };
-          default = grimd;
+          default = leng;
         };
 
 
         # App
         ## use with `nix run`
         apps = rec {
-          grimd = flake-utils.lib.mkApp { drv = self.packages.${system}.grimd; };
-          default = grimd;
+          leng = flake-utils.lib.mkApp { drv = self.packages.${system}.leng; };
+          default = leng;
         };
 
       }));

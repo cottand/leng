@@ -11,7 +11,7 @@ import (
 	"github.com/op/go-logging"
 )
 
-const grimdModuleName = "grimd"
+const lengModuleName = "leng"
 
 type fileConfig struct {
 	name  string
@@ -135,7 +135,7 @@ func createFileLogger(cfg fileConfig, moduleName string) (*logging.LeveledBacken
 }
 
 func createSyslogBackend(cfg boolConfig, moduleName string) (*logging.LeveledBackend, error) {
-	backend, err := logging.NewSyslogBackend("Grimd")
+	backend, err := logging.NewSyslogBackend("Leng")
 	if err != nil {
 		return nil, err
 	}
@@ -175,9 +175,9 @@ func loggerInit(cfg string) (loggingState, error) {
 	}
 
 	state.config = logConfig
-	logger = logging.MustGetLogger(grimdModuleName)
+	logger = logging.MustGetLogger(lengModuleName)
 
-	backends, openFiles, err := createFileLoggers(logConfig.files, grimdModuleName)
+	backends, openFiles, err := createFileLoggers(logConfig.files, lengModuleName)
 	if err != nil {
 		return loggingState{}, err
 	}
@@ -187,12 +187,12 @@ func loggerInit(cfg string) (loggingState, error) {
 
 	if logConfig.stderr.enabled {
 		var format = `%{color}%{time:15:04:05.000} %{level:.4s} %{shortfile} ▶ %{id:03x}%{color:reset} %{message}`
-		stderrLogger := createLoggerFromFile(os.Stderr, logConfig.stderr.level, format, grimdModuleName)
+		stderrLogger := createLoggerFromFile(os.Stderr, logConfig.stderr.level, format, lengModuleName)
 		state.stdBackends = append(state.stdBackends, stderrLogger)
 	}
 
 	if logConfig.syslog.enabled {
-		syslogLogger, err := createSyslogBackend(logConfig.syslog, grimdModuleName)
+		syslogLogger, err := createSyslogBackend(logConfig.syslog, lengModuleName)
 		if err != nil {
 			panic(err)
 		}
@@ -215,7 +215,7 @@ func (s loggingState) cleanUp() {
 }
 
 func (s loggingState) reopen() error {
-	b, f, err := createFileLoggers(s.config.files, grimdModuleName)
+	b, f, err := createFileLoggers(s.config.files, lengModuleName)
 	if err != nil {
 		logger.Errorf("Failed to reinit logging: %s", err)
 		return err

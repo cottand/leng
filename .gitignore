@@ -1,13 +1,13 @@
 .vscode
 *.test
 pprof/
-grimd.exe
+leng.exe
 *.swp
 .idea
 sources
-grimd
-grimd.log
-grimd.toml
+leng
+leng.log
+leng.toml
 .DS_Store
 
 result

@@ -40,35 +40,35 @@ forever:
 		case <-quit:
 			break forever
 		case <-a.queryChannel:
-			a.queryChannel <- grimdActive
+			a.queryChannel <- lengActive
 		case v := <-a.toggleChannel:
 			// Firefox is sending 2 queries in a row, so debouncing is needed.
 			if v.Mode == 1 && nextToggleTime.After(time.Now()) {
 				logger.Warning("Toggle is too close: wait 10 seconds\n")
 			} else {
 				if v.Mode == 1 {
-					grimdActive = !grimdActive
+					lengActive = !lengActive
 				} else {
-					grimdActive = false
+					lengActive = false
 				}
 				nextToggleTime = time.Now().Add(time.Duration(10) * time.Second)
-				if !grimdActive && reactivationDelay > 0 {
+				if !lengActive && reactivationDelay > 0 {
 					reactivate = time.Now().Add(time.Duration(v.Data) * time.Second)
 					reactivatePending = true
 				} else {
 					reactivatePending = false
 				}
-				a.queryChannel <- grimdActive
+				a.queryChannel <- lengActive
 			}
 		case v := <-a.setChannel:
-			grimdActive = v
+			lengActive = v
 			reactivatePending = false
-			a.setChannel <- grimdActive
+			a.setChannel <- lengActive
 		case <-ticker:
 			now := time.Now()
 			if reactivatePending && now.After(reactivate) {
-				logger.Notice("Reactivating grimd (timer)")
-				grimdActive = true
+				logger.Notice("Reactivating leng (timer)")
+				lengActive = true
 				reactivatePending = false
 			}
 		}

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/cottand/grimd/internal/metric"
+	"github.com/cottand/leng/internal/metric"
 	"time"
 
 	"github.com/miekg/dns"

@@ -40,8 +40,8 @@ func integrationTest(changeConfig func(c *Config), test func(client *dns.Client,
 	actChannel := make(chan *ActivationHandler)
 
 	go startActivation(actChannel, quitActivation, config.ReactivationDelay)
-	grimdActivation = <-actChannel
-	grimdActive = true
+	lengActivation = <-actChannel
+	lengActive = true
 	close(actChannel)
 
 	server := &Server{
@@ -290,7 +290,7 @@ func TestConfigReloadForCustomRecords(t *testing.T) {
 	actChannel := make(chan *ActivationHandler)
 
 	go startActivation(actChannel, quitActivation, config.ReactivationDelay)
-	grimdActivation = <-actChannel
+	lengActivation = <-actChannel
 	close(actChannel)
 
 	server := &Server{

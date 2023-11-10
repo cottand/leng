@@ -4,7 +4,7 @@ import (
 	cTls "crypto/tls"
 	"errors"
 	"fmt"
-	"github.com/cottand/grimd/tls"
+	"github.com/cottand/leng/tls"
 	"github.com/jonboulle/clockwork"
 	"github.com/pelletier/go-toml/v2"
 	"log"
@@ -13,10 +13,10 @@ import (
 	"strings"
 )
 
-// BuildVersion returns the build version of grimd, this should be incremented every new release
+// BuildVersion returns the build version of leng, this should be incremented every new release
 var BuildVersion = "1.3.0"
 
-// ConfigVersion returns the version of grimd, this should be incremented every time the config changes so grimd presents a warning
+// ConfigVersion returns the version of leng, this should be incremented every time the config changes so leng presents a warning
 var ConfigVersion = "1.3.0"
 
 // Config holds the configuration parameters
@@ -99,7 +99,7 @@ sourcedirs = [
 #   stderr>@<loglevel>
 #   syslog@<loglevel>
 # loglevel: 0 = errors and important operations, 1 = dns queries, 2 = debug
-# e.g. logconfig = "file:grimd.log@2,syslog@1,stderr@2"
+# e.g. logconfig = "file:leng.log@2,syslog@1,stderr@2"
 logconfig = "stderr@2"
 
 # apidebug enables the debug mode of the http api library
@@ -153,10 +153,10 @@ customdnsrecords = [
     # "example.other.tld          IN CNAME   wikipedia.org"
 ]
 
-# When this string is queried, toggle grimd on and off
+# When this string is queried, toggle leng on and off
 togglename = ""
 
-# If not zero, the delay in seconds before grimd automaticall reactivates after
+# If not zero, the delay in seconds before leng automaticall reactivates after
 # having been turned off.
 reactivationdelay = 300
 
@@ -166,7 +166,7 @@ DoH = "https://cloudflare-dns.com/dns-query"
 # How deep to follow chains of CNAME records
 # set to 0 to disable CNAME-following entirely
 # (anything more than 10 should be more than plenty)
-# see https://github.com/Cottand/grimd/wiki/CNAME%E2%80%90following-DNS
+# see https://github.com/Cottand/leng/wiki/CNAME%E2%80%90following-DNS
 followCnameDepth = 12
 
 # Prometheus metrics - disabled by default
@@ -254,9 +254,9 @@ func LoadConfig(path string) (*Config, error) {
 			config.Version = "none"
 		}
 
-		log.Printf("warning, grimd.toml is out of date!\nconfig v%s\ngrimd config v%s\ngrimd v%s\nplease update your config\n", config.Version, ConfigVersion, BuildVersion)
+		log.Printf("warning, leng.toml is out of date!\nconfig v%s\nleng config v%s\nleng v%s\nplease update your config\n", config.Version, ConfigVersion, BuildVersion)
 	} else {
-		log.Printf("grimd v%s\n", BuildVersion)
+		log.Printf("leng v%s\n", BuildVersion)
 	}
 
 	return &config, nil
