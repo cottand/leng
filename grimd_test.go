@@ -245,6 +245,7 @@ func TestDohIntegration(t *testing.T) {
 
 // TestDohAsProxy checks that DoH works for non-custom records
 func TestDohAsProxy(t *testing.T) {
+	t.Skip("This test is impure in that it speaks to the internet - disabled by default for reproducibility")
 	dohBind := "localhost:8181"
 	integrationTest(func(c *Config) {
 		c.DnsOverHttpServer.Bind = dohBind
