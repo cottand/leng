@@ -2,11 +2,11 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/cottand/leng?style=flat-square)](https://goreportcard.com/report/github.com/cottand/leng)
 [![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg?style=flat-square)](http://godoc.org/github.com/cottand/leng)
-[![Release](https://github.com/cottand/leng/actions/workflows/release.yaml/badge.svg)](https://github.com/cottand/leng/releases)
+[![Build](https://github.com/Cottand/leng/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/Cottand/leng/actions/workflows/build.yml)
 
-:zap: Fast dns proxy, built to black-hole internet advertisements and malware servers. Capable of custom DNS.
+:zap: fast dns server, built to block advertisements and malware servers
 
-Forked from [looterz/leng](https://github.com/looterz/leng)
+Forked from [looterz/grimd](https://github.com/looterz/leng)
 
 # Features
 
@@ -18,7 +18,7 @@ Forked from [looterz/leng](https://github.com/looterz/leng)
 - [x] Blocklist fetching
 - [x] Hardcoded blocklist config
 - [x] Hardcoded whitelist config
-- [x] Fast startup _(so it can be used with templating for service discovery)_
+- [x] Fast startup and tiny image _(so it can be quickly redeployed for use with templating for service discovery)_
 - [x] Small memory footprint (~50MBs with metrics and DoH enabled)
 
 # Installation
@@ -81,12 +81,6 @@ with `0.0.0.0` to ensure that the API interface is available.
 ```shell
 curl -H "Accept: application/json" http://127.0.0.1:55006/application/active
 ```
-
-# Speed
-
-Incoming requests spawn a goroutine and are served concurrently, and the block cache resides in-memory to allow for
-rapid lookups, while answered queries are cached allowing leng to serve thousands of queries at once while maintaining
-a memory footprint of under 30mb for 100,000 blocked domains!
 
 # Daemonize
 
