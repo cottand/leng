@@ -5,6 +5,8 @@ on:
   push:
     branches:
       - 'master'
+    tags:
+      - 'v*'
   pull_request:
     branches:
       - 'master'
@@ -113,6 +115,7 @@ jobs:
             type=schedule
             # tag event
             type=ref,event=tag
+            type=sha,event=tag
             # pull request event
             type=sha,event=pr
           
