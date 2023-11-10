@@ -27,25 +27,15 @@ Forked from [looterz/grimd](https://github.com/looterz/grimd)
 go install github.com/cottand/grimd@latest
 ```
 
-You can also download one of the [releases](https://github.com/cottand/grimd/releases)
-or [docker images](https://github.com/cottand/grimd/pkgs/container/grimd). Detailed guides and resources can be found on
-the [wiki](https://github.com/cottand/grimd/wiki).
+You can also 
+- download one of the binary [releases](https://github.com/cottand/grimd/releases)
+- use the [Docker image](https://github.com/cottand/grimd/pkgs/container/grimd)
+    - `docker run -d -p 53:53/udp -p 53:53/tcp -p 8080:8080/tcp ghcr.io/cottand/grimd`
+- use [Docker compose YML](https://raw.githubusercontent.com/cottand/grimd/master/docker-compose.yml)
+- use the [Nix flake](https://github.com/Cottand/grimd/tree/master/flake.nix)
+    - `nix run github:cottand/grimd`
 
-# Docker Installation
-
-To quickly get grimd up and running with docker, run
-
-```
-docker run -d -p 53:53/udp -p 53:53/tcp -p 8080:8080/tcp ghcr.io/cottand/grimd:latest
-```
-
-Alternatively, download
-the [docker-compose.yml](https://raw.githubusercontent.com/cottand/grimd/master/docker-compose.yml) file and launch it
-using docker-compose.
-
-```
-docker-compose up -d
-```
+Detailed guides and resources can be found on the [wiki](https://github.com/cottand/grimd/wiki).
 
 # Configuration
 
@@ -69,7 +59,7 @@ Usage of grimd:
 
 # Building
 
-Requires golang 1.20 or higher, you build grimd like any other golang application, for example to build for linux x64
+Requires golang 1.21 or higher, you build grimd like any other golang application, for example to build for linux x64
 
 ```shell
 env GOOS=linux GOARCH=amd64 go build -v github.com/cottand/grimd
