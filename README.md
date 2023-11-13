@@ -6,7 +6,7 @@
 
 :zap: fast dns server, built to block advertisements and malware servers
 
-Forked from [looterz/grimd](https://github.com/looterz/leng)
+Forked from [looterz/grimd](https://github.com/looterz/grimd)
 
 # Features
 
@@ -85,7 +85,7 @@ curl -H "Accept: application/json" http://127.0.0.1:55006/application/active
 # Daemonize
 
 You can find examples of different daemon scripts for leng on
-the [wiki](https://github.com/looterz/leng/wiki/Daemon-Scripts).
+the [wiki](https://github.com/cottand/leng/wiki/Daemon-Scripts).
 
 # Objectives
 
