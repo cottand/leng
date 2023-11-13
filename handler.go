@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/cottand/grimd/internal/metric"
+	"github.com/cottand/leng/internal/metric"
 	"net"
 	"slices"
 	"strings"
@@ -124,15 +124,15 @@ func (h *EventLoop) responseFor(Net string, req *dns.Msg, _local net.Addr, _remo
 	q := req.Question[0]
 	Q := Question{UnFqdn(q.Name), dns.TypeToString[q.Qtype], dns.ClassToString[q.Qclass]}
 	logger.Infof("%s lookup　%s\n", remote, Q.String())
-	var grimdActive = grimdActivation.query()
+	var lengActive = lengActivation.query()
 	if len(h.config.ToggleName) > 0 && strings.Contains(Q.Qname, h.config.ToggleName) {
 		logger.Noticef("Found ToggleName! (%s)\n", Q.Qname)
-		grimdActive = grimdActivation.toggle(h.config.ReactivationDelay)
+		lengActive = lengActivation.toggle(h.config.ReactivationDelay)
 
-		if grimdActive {
-			logger.Notice("Grimd Activated")
+		if lengActive {
+			logger.Notice("Leng Activated")
 		} else {
-			logger.Notice("Grimd Deactivated")
+			logger.Notice("Leng Deactivated")
 		}
 	}
 
@@ -150,7 +150,7 @@ func (h *EventLoop) responseFor(Net string, req *dns.Msg, _local net.Addr, _remo
 				return nil, false
 			}
 		} else {
-			if blocked && !grimdActive {
+			if blocked && !lengActive {
 				logger.Debugf("%s hit cache and was blocked: forwarding request\n", Q.String())
 			} else {
 				logger.Debugf("%s hit cache\n", Q.String())
@@ -170,7 +170,7 @@ func (h *EventLoop) responseFor(Net string, req *dns.Msg, _local net.Addr, _remo
 	if IPQuery > 0 {
 		blacklisted = h.blockCache.Exists(Q.Qname)
 
-		if grimdActive && blacklisted {
+		if lengActive && blacklisted {
 			m := new(dns.Msg)
 			m.SetReply(req)
 
@@ -267,8 +267,8 @@ func (h *EventLoop) responseFor(Net string, req *dns.Msg, _local net.Addr, _remo
 	defer metric.ReportDNSRespond(remote, mesg, false)
 
 	if IPQuery > 0 && len(mesg.Answer) > 0 {
-		if !grimdActive && blacklisted {
-			logger.Debugf("%s is blacklisted and grimd not active: not caching\n", Q.String())
+		if !lengActive && blacklisted {
+			logger.Debugf("%s is blacklisted and leng not active: not caching\n", Q.String())
 		} else {
 			err = h.cache.Set(key, mesg, false)
 			if err != nil {

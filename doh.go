@@ -5,7 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/base64"
 	"fmt"
-	"github.com/cottand/grimd/internal/metric"
+	"github.com/cottand/leng/internal/metric"
 	"github.com/miekg/dns"
 	"github.com/prometheus/client_golang/prometheus"
 	"io"

@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	Namespace = "grimd"
+	Namespace = "leng"
 )
 
 var (
