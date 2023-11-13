@@ -26,8 +26,8 @@
         # Dev environment
         ## use with `nix develop`
         devShells = rec {
-          leng = pkgs.mkShell {
-            packages = [ pkgs.fish pkgs.go_1_21 ];
+          leng = with pkgs; mkShell {
+            packages = [ fish go_1_21 mdbook ];
             # Note that `shellHook` still uses bash syntax. This starts fish, then exists the bash shell when fish exits.
             shellHook = "fish && exit";
           };
