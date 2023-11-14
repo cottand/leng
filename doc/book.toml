@@ -12,4 +12,4 @@ command = "mdbook-mermaid"
 [output.html]
 additional-js = ["mermaid.min.js", "mermaid-init.js"]
 git-repository-url = "https://github.com/cottand/leng"
-edit-url-template = "https://github.com/cottand/leng/edit/master/book/{path}"
+edit-url-template = "https://github.com/cottand/leng/edit/master/doc/{path}"
