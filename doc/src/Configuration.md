@@ -48,12 +48,6 @@ nullroutev6 = "0:0:0:0:0:0:0:0"
 # concurrency interval for lookups in miliseconds
 interval = 200
 
-# cache entry lifespan in seconds
-expire = 600
-
-# cache capacity, 0 for infinite
-maxcount = 0
-
 # question cache capacity, 0 for infinite but not recommended (this is used for storing logs)
 questioncachecap = 5000
 
@@ -74,16 +68,16 @@ customdnsrecords = [
 
 
 [Upstream]
-    #Dns over HTTPS provider to use.
+    # Dns over HTTPS provider to use.
     DoH = "https://cloudflare-dns.com/dns-query"
-
     # nameservers to forward queries to
     nameservers = ["1.1.1.1:53", "1.0.0.1:53"]
-
     # query timeout for dns lookups in seconds
     timeout_s = 5
-
-
+    # cache entry lifespan in seconds
+    expire = 600
+    # cache capacity, 0 for infinite
+    maxcount = 0
 
 # Prometheus metrics - enable 
 [Metrics]

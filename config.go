@@ -32,8 +32,6 @@ type Config struct {
 	Nullroutev6       string
 	Interval          int
 	Timeout           int
-	Expire            uint32
-	Maxcount          int
 	QuestionCacheCap  int
 	TTL               uint32
 	Blocklist         []string
@@ -50,6 +48,8 @@ type Upstream struct {
 	DoH         string
 	Nameservers []string
 	TimeoutS    int `toml:"timeout_s"`
+	Expire      uint32
+	Maxcount    int
 }
 
 type Metrics struct {
@@ -92,9 +92,7 @@ sources = [
 ]
 
 # list of locations to recursively read blocklists from (warning, every file found is assumed to be a hosts-file or domain list)
-sourcedirs = [
-	"sources"
-]
+sourcedirs = ["sources"]
 
 # log configuration
 # format: comma separated list of options, where options is one of 
@@ -123,20 +121,9 @@ nullroute = "0.0.0.0"
 # ipv6 address to forward blocked queries to
 nullroutev6 = "0:0:0:0:0:0:0:0"
 
-# nameservers to forward queries to
-nameservers = ["1.1.1.1:53", "1.0.0.1:53"]
-
-# concurrency interval for lookups in miliseconds
+# concurrency interval for lookups in milliseconds
 interval = 200
 
-# query timeout for dns lookups in seconds
-timeout = 5
-
-# cache entry lifespan in seconds
-expire = 600
-
-# cache capacity, 0 for infinite
-maxcount = 0
 
 # question cache capacity, 0 for infinite but not recommended (this is used for storing logs)
 questioncachecap = 5000
@@ -156,19 +143,28 @@ customdnsrecords = [
     # "example.other.tld          IN CNAME   wikipedia.org"
 ]
 
-# Dns over HTTPS upstream provider to use
-DoH = "https://cloudflare-dns.com/dns-query"
-
 # How deep to follow chains of CNAME records
 # set to 0 to disable CNAME-following entirely
 # (anything more than 10 should be more than plenty)
 # see https://github.com/Cottand/leng/wiki/CNAME%E2%80%90following-DNS
 followCnameDepth = 12
 
+[Upstream]
+	# Dns over HTTPS provider to use.
+	DoH = "https://cloudflare-dns.com/dns-query"
+	# nameservers to forward queries to
+	nameservers = ["1.1.1.1:53", "1.0.0.1:53"]
+	# query timeout for dns lookups in seconds
+	timeout_s = 5
+	# cache entry lifespan in seconds
+	expire = 600
+	# cache capacity, 0 for infinite
+	maxcount = 0
+
 # Prometheus metrics - disabled by default
 [Metrics]
-  enabled = false
-  path = "/metrics"
+	enabled = false
+	path = "/metrics"
 
 [DnsOverHttpServer]
 	enabled = false

@@ -70,12 +70,12 @@ func NewEventLoop(config *Config, blockCache *MemoryBlockCache, questionCache *M
 	resolver = &Resolver{clientConfig}
 
 	cache = &MemoryCache{
-		Backend:  make(map[string]*Mesg, config.Maxcount),
-		Maxcount: config.Maxcount,
+		Backend:  make(map[string]*Mesg, config.Upstream.Maxcount),
+		Maxcount: config.Upstream.Maxcount,
 	}
 	negCache = &MemoryCache{
 		Backend:  make(map[string]*Mesg),
-		Maxcount: config.Maxcount,
+		Maxcount: config.Upstream.Maxcount,
 	}
 
 	handler := &EventLoop{
@@ -240,7 +240,7 @@ func (h *EventLoop) responseFor(Net string, req *dns.Msg, _local net.Addr, _remo
 	}
 
 	//find the smallest ttl
-	ttl := h.config.Expire
+	ttl := h.config.Upstream.Expire
 	var candidateTTL uint32
 
 	for index, answer := range mesg.Answer {
