@@ -4,3 +4,9 @@ language = "en"
 multilingual = false
 src = "src"
 title = "leng-doc"
+
+[preprocessor.d2]
+# path to d2 binary.
+path = "d2"
+# layout engine for diagrams. See https://github.com/terrastruct/d2#plugins.
+layout = "dagre"

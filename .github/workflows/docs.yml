@@ -3,7 +3,7 @@ name: Deploy mdBook site to Pages
 on:
   # Runs on pushes targeting the default branch
   push:
-    branches: ["master"]
+    branches: ["*"] # ["master"]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -28,15 +28,16 @@ jobs:
       MDBOOK_VERSION: 0.4.21
     steps:
       - uses: actions/checkout@v3
-      - name: Install mdBook
-        run: |
-          curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf -y | sh
-          rustup update
-          cargo install --version ${MDBOOK_VERSION} mdbook
+      - uses: cachix/install-nix-action@v22
+        with:
+          nix_path: nixpkgs=channel:nixos-23.05
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v3
       - name: Build with mdBook
+        # this starts a shell with all ci deps -- see /flake.nix
+        shell: nix develop ".#ci-doc" --command bash {0}
         run: mdbook build doc
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
