@@ -16,7 +16,7 @@
             inherit system;
             vendorSha256 = "sha256-5dIZzqaw88lKuh1JHJurRZCPgrNzDHK/53bXKNGQBvQ=";
             pname = "leng";
-            version = "0.0.1-test";
+            version = "1.4.0";
             src = ./.;
           };
           default = leng;
