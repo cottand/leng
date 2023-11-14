@@ -1,3 +1,5 @@
+# CNAME Following
+
 Leng implements following CNAME records as specified in [RFC-1034 section 3.6.2](https://www.rfc-editor.org/rfc/rfc1034#section-3.6.2), where it returns all necessary CNAME and A records to fully resolve the query (as opposed to just returning a synthetic A record, which is known as [CNAME flattening](https://developers.cloudflare.com/dns/cname-flattening/cname-flattening-diagram/)).
 
 > ⚠ This is the behaviour of most if not all DNS servers - Leng is only special in this in that it has to deal with cuustom DNS records, the resolvers it proxies, and blocklists. **You should not need to change its default behaviour**, but this page aims to leave it well-documented.

@@ -26,11 +26,18 @@
         # Dev environment
         ## use with `nix develop`
         devShells = rec {
+          # main development shell
           leng = with pkgs; mkShell {
             packages = [ fish go_1_21 mdbook ];
             # Note that `shellHook` still uses bash syntax. This starts fish, then exists the bash shell when fish exits.
             shellHook = "fish && exit";
           };
+
+          # shell with dependencies to build docs only
+          ci-doc = with pkgs; mkShell {
+          packages = [ mdbook mdbook-mermaid ];
+          };
+
           default = leng;
         };
 

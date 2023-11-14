@@ -4,10 +4,12 @@
 
 # DNS
 
-- [DNS-over-HTTP](./DNS-over-HTTPS-(DoH).md)
-- [Custom DNS Records](Custom-DNS-Records.md)
-- [CNAME following](CNAME‐following-DNS.md)
-- [Blocking DNS](Blocking.md)
+- [DNS overview](DNS/DNS.md)
+- [DNS-over-HTTP](DNS/DNS-over-HTTPS-(DoH).md)
+- [Custom DNS Records](DNS/Custom-DNS-Records.md)
+- [CNAME following](DNS/CNAME‐following-DNS.md)
+- [Blocking DNS](DNS/Blocking.md)
+- [DNS Privacy](DNS/Privacy.md)
 
 # Administration
 
