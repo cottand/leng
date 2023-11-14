@@ -4,7 +4,6 @@ import (
 	"github.com/cottand/leng/internal/metric"
 	"net"
 	"slices"
-	"strings"
 	"sync"
 	"time"
 
@@ -71,12 +70,12 @@ func NewEventLoop(config *Config, blockCache *MemoryBlockCache, questionCache *M
 	resolver = &Resolver{clientConfig}
 
 	cache = &MemoryCache{
-		Backend:  make(map[string]*Mesg, config.Maxcount),
-		Maxcount: config.Maxcount,
+		Backend:  make(map[string]*Mesg, config.Upstream.Maxcount),
+		Maxcount: config.Upstream.Maxcount,
 	}
 	negCache = &MemoryCache{
 		Backend:  make(map[string]*Mesg),
-		Maxcount: config.Maxcount,
+		Maxcount: config.Upstream.Maxcount,
 	}
 
 	handler := &EventLoop{
@@ -125,16 +124,6 @@ func (h *EventLoop) responseFor(Net string, req *dns.Msg, _local net.Addr, _remo
 	Q := Question{UnFqdn(q.Name), dns.TypeToString[q.Qtype], dns.ClassToString[q.Qclass]}
 	logger.Infof("%s lookup　%s\n", remote, Q.String())
 	var lengActive = lengActivation.query()
-	if len(h.config.ToggleName) > 0 && strings.Contains(Q.Qname, h.config.ToggleName) {
-		logger.Noticef("Found ToggleName! (%s)\n", Q.Qname)
-		lengActive = lengActivation.toggle(h.config.ReactivationDelay)
-
-		if lengActive {
-			logger.Notice("Leng Activated")
-		} else {
-			logger.Notice("Leng Deactivated")
-		}
-	}
 
 	IPQuery := h.isIPQuery(q)
 
@@ -174,11 +163,11 @@ func (h *EventLoop) responseFor(Net string, req *dns.Msg, _local net.Addr, _remo
 			m := new(dns.Msg)
 			m.SetReply(req)
 
-			if h.config.NXDomain {
+			if h.config.Blocking.NXDomain {
 				m.SetRcode(req, dns.RcodeNameError)
 			} else {
-				nullroute := net.ParseIP(h.config.Nullroute)
-				nullroutev6 := net.ParseIP(h.config.Nullroutev6)
+				nullroute := net.ParseIP(h.config.Blocking.Nullroute)
+				nullroutev6 := net.ParseIP(h.config.Blocking.Nullroutev6)
 
 				switch IPQuery {
 				case _IP4Query:
@@ -225,7 +214,7 @@ func (h *EventLoop) responseFor(Net string, req *dns.Msg, _local net.Addr, _remo
 	NewEntry := QuestionCacheEntry{Date: time.Now().Unix(), Remote: remote.String(), Query: Q, Blocked: false}
 	go h.questionCache.Add(NewEntry)
 
-	mesg, err := h.resolver.Lookup(Net, req, h.config.Timeout, h.config.Interval, h.config.Nameservers, h.config.DoH)
+	mesg, err := h.resolver.Lookup(Net, req, h.config.Timeout, h.config.Interval, h.config.Upstream.Nameservers, h.config.Upstream.DoH)
 
 	if err != nil {
 		logger.Errorf("resolve query error %s\n", err)
@@ -238,7 +227,7 @@ func (h *EventLoop) responseFor(Net string, req *dns.Msg, _local net.Addr, _remo
 	}
 
 	if mesg.Truncated && Net == "udp" {
-		mesg, err = h.resolver.Lookup("tcp", req, h.config.Timeout, h.config.Interval, h.config.Nameservers, h.config.DoH)
+		mesg, err = h.resolver.Lookup("tcp", req, h.config.Timeout, h.config.Interval, h.config.Upstream.Nameservers, h.config.Upstream.DoH)
 		if err != nil {
 			logger.Errorf("resolve tcp query error %s\n", err)
 
@@ -251,7 +240,7 @@ func (h *EventLoop) responseFor(Net string, req *dns.Msg, _local net.Addr, _remo
 	}
 
 	//find the smallest ttl
-	ttl := h.config.Expire
+	ttl := h.config.Upstream.Expire
 	var candidateTTL uint32
 
 	for index, answer := range mesg.Answer {

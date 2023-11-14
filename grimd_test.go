@@ -39,7 +39,7 @@ func integrationTest(changeConfig func(c *Config), test func(client *dns.Client,
 	quitActivation := make(chan bool)
 	actChannel := make(chan *ActivationHandler)
 
-	go startActivation(actChannel, quitActivation, config.ReactivationDelay)
+	go startActivation(actChannel, quitActivation)
 	lengActivation = <-actChannel
 	lengActive = true
 	close(actChannel)
@@ -53,7 +53,7 @@ func integrationTest(changeConfig func(c *Config), test func(client *dns.Client,
 
 	// BlockCache contains all blocked domains
 	blockCache := &MemoryBlockCache{Backend: make(map[string]bool)}
-	for _, blocked := range config.Blocklist {
+	for _, blocked := range config.Blocking.Blocklist {
 		_ = blockCache.Set(blocked, true)
 	}
 	// QuestionCache contains all queries to the dns server
@@ -200,7 +200,7 @@ func TestCnameFollowWithBlocked(t *testing.T) {
 				"first.com          IN  CNAME  second.com  ",
 				"second.com         IN  CNAME  example.com   ",
 			}
-			c.Blocklist = []string{"example.com"}
+			c.Blocking.Blocklist = []string{"example.com"}
 
 		},
 		func(client *dns.Client, target string) {
@@ -289,7 +289,7 @@ func TestConfigReloadForCustomRecords(t *testing.T) {
 	quitActivation := make(chan bool)
 	actChannel := make(chan *ActivationHandler)
 
-	go startActivation(actChannel, quitActivation, config.ReactivationDelay)
+	go startActivation(actChannel, quitActivation)
 	lengActivation = <-actChannel
 	close(actChannel)
 

@@ -179,11 +179,11 @@ func parseHostFile(fileName string, blockCache *MemoryBlockCache) error {
 func PerformUpdate(config *Config, forceUpdate bool) *MemoryBlockCache {
 	newBlockCache := &MemoryBlockCache{Backend: make(map[string]bool), Special: make(map[string]*regexp.Regexp)}
 	if _, err := os.Stat("lists"); os.IsNotExist(err) || forceUpdate {
-		if err := update(newBlockCache, config.Whitelist, config.Blocklist, config.Sources); err != nil {
+		if err := update(newBlockCache, config.Blocking.Whitelist, config.Blocking.Blocklist, config.Blocking.Sources); err != nil {
 			logger.Fatal(err)
 		}
 	}
-	if err := updateBlockCache(newBlockCache, config.SourceDirs); err != nil {
+	if err := updateBlockCache(newBlockCache, config.Blocking.SourceDirs); err != nil {
 		logger.Fatal(err)
 	}
 

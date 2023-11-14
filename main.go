@@ -63,7 +63,7 @@ func main() {
 	quitActivation := make(chan bool)
 	actChannel := make(chan *ActivationHandler)
 
-	go startActivation(actChannel, quitActivation, config.ReactivationDelay)
+	go startActivation(actChannel, quitActivation)
 	lengActivation = <-actChannel
 	close(actChannel)
 
