@@ -35,7 +35,7 @@
 
           # shell with dependencies to build docs only
           ci-doc = with pkgs; mkShell {
-              packages = [ mdbook mdbook-d2 ];
+          packages = [ mdbook mdbook-mermaid ];
           };
 
           default = leng;

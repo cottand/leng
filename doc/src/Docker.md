@@ -34,4 +34,4 @@ docker run -d \
 
 ```
 
-See [Configuratin](./Configuration.md) for the full config.
+See [Configuration](./Configuration.md) for the full config.
