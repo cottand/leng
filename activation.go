@@ -1,9 +1,5 @@
 package main
 
-import (
-	"time"
-)
-
 // ToggleData type
 type ToggleData struct {
 	Mode uint
@@ -17,9 +13,7 @@ type ActivationHandler struct {
 	setChannel    chan bool
 }
 
-func startActivation(actChannel chan *ActivationHandler, quit chan bool, reactivationDelay uint) {
-	var reactivate time.Time
-	var reactivatePending bool
+func startActivation(actChannel chan *ActivationHandler, quit chan bool) {
 	a := &ActivationHandler{}
 
 	a.queryChannel = make(chan bool)
@@ -30,10 +24,6 @@ func startActivation(actChannel chan *ActivationHandler, quit chan bool, reactiv
 	// then continue to the loop
 	actChannel <- a
 
-	ticker := time.Tick(1 * time.Second)
-
-	var nextToggleTime = time.Now()
-
 forever:
 	for {
 		select {
@@ -42,35 +32,15 @@ forever:
 		case <-a.queryChannel:
 			a.queryChannel <- lengActive
 		case v := <-a.toggleChannel:
-			// Firefox is sending 2 queries in a row, so debouncing is needed.
-			if v.Mode == 1 && nextToggleTime.After(time.Now()) {
-				logger.Warning("Toggle is too close: wait 10 seconds\n")
+			if v.Mode == 1 {
+				lengActive = !lengActive
 			} else {
-				if v.Mode == 1 {
-					lengActive = !lengActive
-				} else {
-					lengActive = false
-				}
-				nextToggleTime = time.Now().Add(time.Duration(10) * time.Second)
-				if !lengActive && reactivationDelay > 0 {
-					reactivate = time.Now().Add(time.Duration(v.Data) * time.Second)
-					reactivatePending = true
-				} else {
-					reactivatePending = false
-				}
-				a.queryChannel <- lengActive
+				lengActive = false
 			}
+			a.queryChannel <- lengActive
 		case v := <-a.setChannel:
 			lengActive = v
-			reactivatePending = false
 			a.setChannel <- lengActive
-		case <-ticker:
-			now := time.Now()
-			if reactivatePending && now.After(reactivate) {
-				logger.Notice("Reactivating leng (timer)")
-				lengActive = true
-				reactivatePending = false
-			}
 		}
 	}
 	logger.Debugf("Activation goroutine exiting")

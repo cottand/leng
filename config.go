@@ -30,7 +30,6 @@ type Config struct {
 	NXDomain          bool
 	Nullroute         string
 	Nullroutev6       string
-	Nameservers       []string
 	Interval          int
 	Timeout           int
 	Expire            uint32
@@ -40,13 +39,17 @@ type Config struct {
 	Blocklist         []string
 	Whitelist         []string
 	CustomDNSRecords  []string
-	ToggleName        string
-	ReactivationDelay uint
 	APIDebug          bool
-	DoH               string
+	Upstream          Upstream
 	Metrics           Metrics `toml:"metrics"`
 	DnsOverHttpServer DnsOverHttpServer
 	FollowCnameDepth  uint32
+}
+
+type Upstream struct {
+	DoH         string
+	Nameservers []string
+	TimeoutS    int `toml:"timeout_s"`
 }
 
 type Metrics struct {
@@ -152,13 +155,6 @@ customdnsrecords = [
     # "example.mywebsite.tld      IN A       10.0.0.1"
     # "example.other.tld          IN CNAME   wikipedia.org"
 ]
-
-# When this string is queried, toggle leng on and off
-togglename = ""
-
-# If not zero, the delay in seconds before leng automaticall reactivates after
-# having been turned off.
-reactivationdelay = 300
 
 # Dns over HTTPS upstream provider to use
 DoH = "https://cloudflare-dns.com/dns-query"

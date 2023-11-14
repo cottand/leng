@@ -45,14 +45,8 @@ nullroute = "0.0.0.0"
 # ipv6 address to forward blocked queries to
 nullroutev6 = "0:0:0:0:0:0:0:0"
 
-# nameservers to forward queries to
-nameservers = ["1.1.1.1:53", "1.0.0.1:53"]
-
 # concurrency interval for lookups in miliseconds
 interval = 200
-
-# query timeout for dns lookups in seconds
-timeout = 5
 
 # cache entry lifespan in seconds
 expire = 600
@@ -66,13 +60,6 @@ questioncachecap = 5000
 # manual blocklist entries
 blocklist = []
 
-# Drbl related settings
-usedrbl = 0
-drblpeersfilename = "drblpeers.yaml"
-drblblockweight = 128
-drbltimeout = 30
-drbldebug = 0
-
 # manual whitelist entries - comments for reference
 whitelist = [
 	# "getsentry.com",
@@ -85,20 +72,36 @@ customdnsrecords = [
     # "example.other.tld          IN CNAME   wikipedia.org"
 ]
 
-# When this string is queried, toggle leng on and off
-togglename = ""
 
-# If not zero, the delay in seconds before leng automaticall reactivates after
-# having been turned off.
-reactivationdelay = 300
+[Upstream]
+    #Dns over HTTPS provider to use.
+    DoH = "https://cloudflare-dns.com/dns-query"
 
-#Dns over HTTPS provider to use.
-DoH = "https://cloudflare-dns.com/dns-query"
+    # nameservers to forward queries to
+    nameservers = ["1.1.1.1:53", "1.0.0.1:53"]
+
+    # query timeout for dns lookups in seconds
+    timeout_s = 5
+
+
 
 # Prometheus metrics - enable 
 [Metrics]
-  enabled = false
-  path = "/metrics"
+    enabled = false
+    path = "/metrics"
+
+[DnsOverHttpServer]
+    enabled = false
+    bind = "0.0.0.0:80"
+    timeoutMs = 5000
+
+# TLS config is not required for DoH if you have some proxy (ie, caddy, nginx, traefik...) manage HTTPS for you
+    [DnsOverHttpServer.TLS]
+        enabled = false
+        certPath = ""
+        keyPath = ""
+        # if empty, system CAs will be used
+        caPath = ""
 ```
 
 The most up-to-date version can be found on [config.go](https://github.com/Cottand/leng/blob/master/config.go)
