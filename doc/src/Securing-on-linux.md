@@ -21,3 +21,8 @@ ufw reload
 ```
 
 Now only the client(s) you whitelisted can access the dns server.
+
+> ⚠ For Docker deployments, keep in mind `ufw` will **not** stop
+> outside connections to your containers if you bind their ports.
+> See the [Docker docs](https://docs.docker.com/network/packet-filtering-firewalls/#docker-and-ufw)
+> about the issue.

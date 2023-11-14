@@ -35,13 +35,13 @@ You can also
 - use the [Nix flake](https://github.com/Cottand/leng/tree/master/flake.nix)
     - `nix run github:cottand/leng`
 
-Detailed guides and resources can be found on the [wiki](https://github.com/cottand/leng/wiki).
+Detailed guides and resources can be found in the [docs website](https://cottand.github.com/leng).
 
 # Configuration
 
 By default, leng binds DNS to `0.0.0.0:53` and loads a few known blocklists. The default settings should be enough for
 most.
-See [the wiki](https://github.com/Cottand/leng/wiki/Configuration) for the full config, including defaults and dynamic
+See [the wiki](https://cottand.github.io/leng/Configuration) for the full config, including defaults and dynamic
 config reloading.
 
 ### CLI Flags
@@ -81,11 +81,6 @@ with `0.0.0.0` to ensure that the API interface is available.
 ```shell
 curl -H "Accept: application/json" http://127.0.0.1:55006/application/active
 ```
-
-# Daemonize
-
-You can find examples of different daemon scripts for leng on
-the [wiki](https://github.com/cottand/leng/wiki/Daemon-Scripts).
 
 # Objectives
 
