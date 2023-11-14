@@ -163,11 +163,11 @@ func (h *EventLoop) responseFor(Net string, req *dns.Msg, _local net.Addr, _remo
 			m := new(dns.Msg)
 			m.SetReply(req)
 
-			if h.config.NXDomain {
+			if h.config.Blocking.NXDomain {
 				m.SetRcode(req, dns.RcodeNameError)
 			} else {
-				nullroute := net.ParseIP(h.config.Nullroute)
-				nullroutev6 := net.ParseIP(h.config.Nullroutev6)
+				nullroute := net.ParseIP(h.config.Blocking.Nullroute)
+				nullroutev6 := net.ParseIP(h.config.Blocking.Nullroutev6)
 
 				switch IPQuery {
 				case _IP4Query:
