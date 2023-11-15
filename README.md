@@ -10,7 +10,7 @@ Forked from [looterz/grimd](https://github.com/looterz/grimd)
 
 # Features
 
-- [x] DNS over UTP
+- [x] DNS over UDP
 - [x] DNS over TCP
 - [x] DNS over HTTP(S) (DoH as per [RFC-8484](https://datatracker.ietf.org/doc/html/rfc8484))
 - [x] Prometheus metrics API
