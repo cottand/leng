@@ -35,7 +35,7 @@ You can also
 - use the [Nix flake](https://github.com/Cottand/leng/tree/master/flake.nix)
     - `nix run github:cottand/leng`
 
-Detailed guides and resources can be found in the [docs website](https://cottand.github.com/leng).
+Detailed guides and resources can be found in the [docs website](https://cottand.github.io/leng).
 
 # Configuration
 
