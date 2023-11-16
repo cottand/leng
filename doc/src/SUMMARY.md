@@ -1,6 +1,7 @@
 # Summary
 
 - [Home](./Home.md)
+- [Alternatives Comparison](AlternativesComparison.md)
 
 # DNS
 
