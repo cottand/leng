@@ -22,7 +22,7 @@ jobs:
   docker:
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         platform:
           - linux/amd64
