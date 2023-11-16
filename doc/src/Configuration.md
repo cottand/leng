@@ -53,7 +53,6 @@ customdnsrecords = [
     ]
     # list of locations to recursively read blocklists from (warning, every file found is assumed to be a hosts-file or domain list)
     sourcedirs = ["sources"]
-    # manual blocklist entries
     # manual whitelist entries - comments for reference
     whitelist = [
         # "getsentry.com",
