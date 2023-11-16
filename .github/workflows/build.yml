@@ -7,9 +7,6 @@ on:
       - 'master'
     tags:
       - 'v*'
-  pull_request:
-    branches:
-      - 'master'
 env:
   # Use docker.io for Docker Hub if empty
   REGISTRY: ghcr.io
