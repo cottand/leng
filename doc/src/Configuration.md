@@ -29,7 +29,7 @@ questioncachecap = 5000
 
 # manual custom dns entries - comments for reference
 customdnsrecords = [
-    # "example.mywebsite.tld      IN A       10.0.0.1"
+    # "example.mywebsite.tld      IN A       10.0.0.1",
     # "example.other.tld          IN CNAME   wikipedia.org"
 ]
 
@@ -53,8 +53,6 @@ customdnsrecords = [
     ]
     # list of locations to recursively read blocklists from (warning, every file found is assumed to be a hosts-file or domain list)
     sourcedirs = ["sources"]
-    # manual blocklist entries
-    blocklist = []
     # manual whitelist entries - comments for reference
     whitelist = [
         # "getsentry.com",
