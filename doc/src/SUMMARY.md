@@ -16,6 +16,7 @@
 
 - [Configuration](./Configuration.md)
 - [Prometheus Metrics](./Prometheus-Metrics.md)
+- [Signals (config reload)](Signals.md)
 
 # Deployment
 
