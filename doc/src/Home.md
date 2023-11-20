@@ -25,4 +25,4 @@ my motivation for forking _grimd_ and creating leng was the need for a server
 that provided blocklists (like _Blocky_) as well as decent custom DNS records
 support (like _CoreDNS_, _grimd_ was almost there).
 
-For more on leveraging leng for DNS privacy, see [DNS Privacy](Privacy.md).
+For more on leveraging leng for DNS privacy, see [DNS Privacy](DNS/Privacy.md).
