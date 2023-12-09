@@ -35,7 +35,7 @@
 
           # shell with dependencies to build docs only
           ci-doc = with pkgs; mkShell {
-          packages = [ mdbook mdbook-mermaid ];
+            packages = [ mdbook mdbook-mermaid ];
           };
 
           default = leng;
@@ -49,5 +49,87 @@
           default = leng;
         };
 
-      }));
+      })) //
+
+    {
+      nixosModules.default = { pkgs, lib, config, ... }:
+        with lib;
+        let
+          cfg = config.services.leng;
+        in
+        {
+          ## interface
+          options.services.leng = {
+            enable = mkOption {
+              type = types.bool;
+              default = false;
+            };
+            enableSeaweedFsVolume = mkOption {
+              type = types.bool;
+              description = "Whether to make this nomad client capable of hosting a SeaweedFS volume";
+            };
+            package = mkOption {
+              type = types.package;
+              default = self.packages.${pkgs.system}.leng;
+            };
+            configurationText = mkOption {
+              type = types.str;
+              default = "";
+              description = "Settings as TOML string";
+              example = ''
+                # address to bind to for the DNS server
+                bind = "0.0.0.0:53"
+
+                # address to bind to for the API server
+                api = "127.0.0.1:8080"
+
+                Metrics.enabled = false;
+              '';
+            };
+
+            # TODO CONFIG
+          };
+
+          ## implementation
+          config = mkIf cfg.enable {
+            environment = {
+              etc."leng.toml".source =
+                if cfg.configuration != { }
+                then ((pkgs.formats.toml { }).generate "leng.toml" cfg.configuration)
+                else cfg.configurationText;
+              systemPackages = [ cfg.package ];
+            };
+
+            systemd.services.leng = {
+              description = "leng";
+              wantedBy = [ "multi-user.target" ];
+              wants = [ "network-online.target" ];
+              after = [ "network-online.target" ];
+              restartTriggers = [ config.environment.etc."leng.toml".source ];
+
+              serviceConfig = {
+                DynamicUser = true;
+                ExecReload = "${pkgs.coreutils}/bin/kill -HUP $MAINPID";
+                ExecStart = "${cfg.package}/bin/leng" + " --config=/etc/leng.toml";
+                KillMode = "process";
+                KillSignal = "SIGINT";
+                Restart = "on-failure";
+                RestartSec = 2;
+                TasksMax = "infinity";
+              };
+
+              unitConfig = {
+                StartLimitIntervalSec = 10;
+                StartLimitBurst = 3;
+              };
+            };
+            assertions = [
+              {
+                assertion = cfg.configuration != { } && cfg.configurationText != "";
+                message = "Only one of services.leng.configuration or services.leng.configurationText may be set";
+              }
+            ];
+          };
+        };
+    };
 }
