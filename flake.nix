@@ -137,7 +137,7 @@
             };
             assertions = [
               {
-                assertion = cfg.configuration != { } && cfg.configurationText != "";
+                assertion = !(cfg.configuration != { } && cfg.configurationText != "");
                 message = "Only one of services.leng.configuration or services.leng.configurationText may be set";
               }
             ];
