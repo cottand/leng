@@ -87,7 +87,18 @@
               '';
             };
 
-            # TODO CONFIG
+            configuration = mkOption {
+              type = types.attrSet;
+              default = "";
+              description = "Configuration as Nix attrSet";
+              example = ''
+                {
+                  api = "127.0.0.1:8080";
+                  metrics.enabled = true;
+                }
+              '';
+            };
+
           };
 
           ## implementation
@@ -133,3 +144,4 @@
         };
     };
 }
+
