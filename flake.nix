@@ -90,7 +90,7 @@
 
             configuration = mkOption {
               type = toml.type;
-              default = "";
+              default = {};
               description = "Configuration as Nix attrSet";
               example = ''
                 {
