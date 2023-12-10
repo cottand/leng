@@ -56,6 +56,7 @@
         with lib;
         let
           cfg = config.services.leng;
+          toml = pkgs.formats.toml {};
         in
         {
           ## interface
@@ -88,7 +89,7 @@
             };
 
             configuration = mkOption {
-              type = types.attrSet;
+              type = toml.type;
               default = "";
               description = "Configuration as Nix attrSet";
               example = ''
@@ -106,7 +107,7 @@
             environment = {
               etc."leng.toml".source =
                 if cfg.configuration != { }
-                then ((pkgs.formats.toml { }).generate "leng.toml" cfg.configuration)
+                then (toml.generate "leng.toml" cfg.configuration)
                 else cfg.configurationText;
               systemPackages = [ cfg.package ];
             };
