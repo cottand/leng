@@ -1,6 +1,35 @@
 If leng.toml is not found the default configuration will be used. If it is found, fields that are set will act as overrides.
 
-Here is the default configuration:
+## Quick Start
+
+If you are happy to use Cloudflare as your upstream DNS provider and just want to generally block tracking
+and advertising, the following minimal config should be enough.
+
+If you want to tweak more settings, keep scrolling down!
+
+```toml
+# address to bind to for the DNS server
+bind = "0.0.0.0:53"
+
+# address to bind to for the API server
+api = "127.0.0.1:8080"
+
+# manual custom dns entries - comments for reference
+customdnsrecords = [
+    # "example.mywebsite.tld      IN A       10.0.0.1",
+]
+
+[Metrics]
+    enabled = false
+
+[Blocking]
+    # manual whitelist entries - comments for reference
+    whitelist = [
+        # "getsentry.com",
+    ]
+```
+
+## Default configuration
 
 ```toml
 # log configuration
