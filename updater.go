@@ -17,10 +17,11 @@ var timesSeen = make(map[string]int)
 var whitelist = make(map[string]bool)
 
 // Update downloads all the blocklists and imports them into the database
-func update(blockCache *MemoryBlockCache, wlist []string, blist []string, sources []string) error {
-	if _, err := os.Stat("sources"); os.IsNotExist(err) {
-		if err := os.Mkdir("sources", 0700); err != nil {
-			return fmt.Errorf("error creating sources directory: %s", err)
+func update(blockCache *MemoryBlockCache, wlist []string, blist []string, sources []string, sourcesStore string) error {
+	sourcesStore = filepath.Clean(sourcesStore)
+	if _, err := os.Stat(sourcesStore); os.IsNotExist(err) {
+		if err := os.Mkdir(sourcesStore, 0700); err != nil {
+			return fmt.Errorf("error creating sources directory (at %s): %s", err, sourcesStore)
 		}
 	}
 
@@ -35,15 +36,15 @@ func update(blockCache *MemoryBlockCache, wlist []string, blist []string, source
 		}
 	}
 
-	if err := fetchSources(sources); err != nil {
+	if err := fetchSources(sources, sourcesStore); err != nil {
 		return fmt.Errorf("error fetching sources: %s", err)
 	}
 
 	return nil
 }
 
-func downloadFile(uri string, name string) error {
-	filePath := filepath.FromSlash(fmt.Sprintf("sources/%s", name))
+func downloadFile(uri string, name string, sourcesStore string) error {
+	filePath := filepath.Clean(filepath.FromSlash(fmt.Sprintf("%s/%s", sourcesStore, name)))
 
 	output, err := os.Create(filePath)
 	if err != nil {
@@ -73,7 +74,7 @@ func downloadFile(uri string, name string) error {
 	return nil
 }
 
-func fetchSources(sources []string) error {
+func fetchSources(sources []string, sourcesStore string) error {
 	var wg sync.WaitGroup
 
 	for _, uri := range sources {
@@ -86,7 +87,7 @@ func fetchSources(sources []string) error {
 
 		go func(uri string, name string) {
 			logger.Debugf("fetching source %s\n", uri)
-			if err := downloadFile(uri, name); err != nil {
+			if err := downloadFile(uri, name, sourcesStore); err != nil {
 				fmt.Println(err)
 			}
 
@@ -179,7 +180,7 @@ func parseHostFile(fileName string, blockCache *MemoryBlockCache) error {
 func PerformUpdate(config *Config, forceUpdate bool) *MemoryBlockCache {
 	newBlockCache := &MemoryBlockCache{Backend: make(map[string]bool), Special: make(map[string]*regexp.Regexp)}
 	if _, err := os.Stat("lists"); os.IsNotExist(err) || forceUpdate {
-		if err := update(newBlockCache, config.Blocking.Whitelist, config.Blocking.Blocklist, config.Blocking.Sources); err != nil {
+		if err := update(newBlockCache, config.Blocking.Whitelist, config.Blocking.Blocklist, config.Blocking.Sources, config.Blocking.SourcesStore); err != nil {
 			logger.Fatal(err)
 		}
 	}

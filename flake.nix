@@ -14,7 +14,7 @@
         packages = rec {
           leng = pkgs.buildGo121Module {
             inherit system;
-            vendorSha256 = "sha256-5dIZzqaw88lKuh1JHJurRZCPgrNzDHK/53bXKNGQBvQ=";
+            vendorHash = "sha256-5dIZzqaw88lKuh1JHJurRZCPgrNzDHK/53bXKNGQBvQ=";
             pname = "leng";
             version = "1.4.0";
             src = ./.;
@@ -73,21 +73,6 @@
               type = types.package;
               default = self.packages.${pkgs.system}.leng;
             };
-            configurationText = mkOption {
-              type = types.str;
-              default = "";
-              description = "Settings as TOML string";
-              example = ''
-                # address to bind to for the DNS server
-                bind = "0.0.0.0:53"
-
-                # address to bind to for the API server
-                api = "127.0.0.1:8080"
-
-                Metrics.enabled = false;
-              '';
-            };
-
             configuration = mkOption {
               type = toml.type;
               default = {};
@@ -96,6 +81,7 @@
                 {
                   api = "127.0.0.1:8080";
                   metrics.enabled = true;
+                  blocking.sourcesStore = "/var/leng-sources";
                 }
               '';
             };
@@ -105,10 +91,7 @@
           ## implementation
           config = mkIf cfg.enable {
             environment = {
-              etc."leng.toml".source =
-                if cfg.configuration != { }
-                then (toml.generate "leng.toml" cfg.configuration)
-                else cfg.configurationText;
+              etc."leng.toml".source = toml.generate "leng.toml" cfg.configuration;
               systemPackages = [ cfg.package ];
             };
 
@@ -128,6 +111,7 @@
                 Restart = "on-failure";
                 RestartSec = 2;
                 TasksMax = "infinity";
+                StateDirectory = "leng-sources";
               };
 
               unitConfig = {
@@ -136,10 +120,10 @@
               };
             };
             assertions = [
-              {
-                assertion = !(cfg.configuration != { } && cfg.configurationText != "");
-                message = "Only one of services.leng.configuration or services.leng.configurationText may be set";
-              }
+#              {
+#                assertion = cfg.configuration.blocking.sourcesStore == cfg.;
+#                message = "Only one of services.leng.configuration or services.leng.configurationText may be set";
+#              }
             ];
           };
         };

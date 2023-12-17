@@ -89,8 +89,8 @@ func StartAPIServer(config *Config,
 	})
 
 	router.GET("/blockcache/personal", func(c *gin.Context) {
-		filePath := filepath.FromSlash("sources/personal.list")
-		f, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_RDONLY, 0600)
+		personalListPath := filepath.Clean(filepath.FromSlash(config.Blocking.SourcesStore + "/personal.list"))
+		f, err := os.OpenFile(personalListPath, os.O_APPEND|os.O_CREATE|os.O_RDONLY, 0600)
 		if err != nil {
 			logger.Critical(err)
 		}
@@ -112,8 +112,8 @@ func StartAPIServer(config *Config,
 	})
 
 	router.GET("/blockcache/set/:key", func(c *gin.Context) {
-		filePath := filepath.FromSlash("sources/personal.list")
-		f, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0600)
+		personalListPath := filepath.Clean(filepath.FromSlash(config.Blocking.SourcesStore + "/personal.list"))
+		f, err := os.OpenFile(personalListPath, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0600)
 		if err != nil {
 			logger.Critical(err)
 		}
