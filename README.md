@@ -20,6 +20,7 @@ Forked from [looterz/grimd](https://github.com/looterz/grimd)
 - [x] Hardcoded whitelist config
 - [x] Fast startup and tiny image _(so it can be quickly redeployed for use with templating for service discovery)_
 - [x] Small memory footprint (~50MBs with metrics and DoH enabled)
+- [x] NixOS Flake for easy deployment
 
 # Installation
 
@@ -33,7 +34,8 @@ You can also
     - `docker run -d -p 53:53/udp -p 53:53/tcp -p 8080:8080/tcp ghcr.io/cottand/leng`
 - use [Docker compose YML](https://raw.githubusercontent.com/cottand/leng/master/docker-compose.yml)
 - use the [Nix flake](https://github.com/Cottand/leng/tree/master/flake.nix)
-    - `nix run github:cottand/leng`
+    - to run: `nix run github:cottand/leng`
+    - or [add as a NixOS module](https://cottand.github.io/leng/Nix.html)
 
 Detailed guides and resources can be found in the [docs website](https://cottand.github.io/leng).
 

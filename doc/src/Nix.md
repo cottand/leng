@@ -16,7 +16,7 @@ The leng flake also exports a NixOS module for easy deployment on NixOS machines
 {
   inputs = {
     # pinned version for safety
-    leng.url = "github:cottand/leng/v1.4.0"; 
+    leng.url = "github:cottand/leng/v1.5.0"; 
     leng.nixpkgs.follows = "nixpkgs";
   };
 
@@ -50,7 +50,7 @@ Add the following inside your configuration.nix:
 {pkgs, lib, ... }: {
   imports = [
     # import leng module
-    (builtins.getFlake "github:cottand/leng/1.4.0").nixosModules.default 
+    (builtins.getFlake "github:cottand/leng/1.5.0").nixosModules.default 
   ];
     
   # now you can use services.leng!

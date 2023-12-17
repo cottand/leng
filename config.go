@@ -14,10 +14,10 @@ import (
 )
 
 // BuildVersion returns the build version of leng, this should be incremented every new release
-var BuildVersion = "1.4.0"
+var BuildVersion = "1.5.0"
 
 // ConfigVersion returns the version of leng, this should be incremented every time the config changes so leng presents a warning
-var ConfigVersion = "1.4.0"
+var ConfigVersion = "1.5.0"
 
 // Config holds the configuration parameters
 type Config struct {
