@@ -81,7 +81,7 @@
                 {
                   api = "127.0.0.1:8080";
                   metrics.enabled = true;
-                  blocking.sourcesStore = "/var/leng-sources";
+                  blocking.sourcesStore = "/var/lib/leng-sources";
                 }
               '';
             };
