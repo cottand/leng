@@ -6,21 +6,65 @@ Leng is also packaged as [a Nix flake](../../flake.nix).
 
 You can simply run `nix run github:cottand/leng` to run latest `master`.
 
-## Installing
+## Installing in NixOS via a Module
+
+The leng flake also exports a NixOS module for easy deployment on NixOS machines.
 
 ### In your flake
 
 ```nix
 {
-  # pinned version for safety
-  inputs.grimn.url = "github:cottand/leng/v1.3.1"; 
+  inputs = {
+    # pinned version for safety
+    leng.url = "github:cottand/leng/v1.4.0"; 
+    leng.nixpkgs.follows = "nixpkgs";
+  };
 
-  outputs = { self, leng }: {
+  outputs = { self, leng, ... }: {
     # Use in your outputs
+    nixosConfigurations."this-is-a-server-innit" = nixpkgs.lib.nixosSystem {
+      modules = [ 
+        ./configuration.nix
+        leng.nixosModules.default #  <- import leng module
+        {
+          services.leng = {       # <-- now you can use services.leng!
+            enable = true;
+            configuration = {
+              api = "127.0.0.1:8080";
+              metrics.enabled = true;
+              blocking.sourcesStore = "/var/lib/leng-sources";
+            };
+          };
+        }
+      ];
+    };
   };
 }
 ```
 
+
+### Legacy Nix
+
+Add the following inside your configuration.nix:
+```nix
+{pkgs, lib, ... }: {
+  imports = [
+    # import leng module
+    (builtins.getFlake "github:cottand/leng/1.4.0").nixosModules.default 
+  ];
+    
+  # now you can use services.leng!
+  services.leng = {       
+    enable = true;
+    configuration = {
+      api = "127.0.0.1:8080";
+      metrics.enabled = true;
+      blocking.sourcesStore = "/var/lib/leng-sources";
+    };
+  };
+  
+}
+```
 
 ## Developing
 

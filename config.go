@@ -14,10 +14,10 @@ import (
 )
 
 // BuildVersion returns the build version of leng, this should be incremented every new release
-var BuildVersion = "1.3.0"
+var BuildVersion = "1.4.0"
 
 // ConfigVersion returns the version of leng, this should be incremented every time the config changes so leng presents a warning
-var ConfigVersion = "1.3.0"
+var ConfigVersion = "1.4.0"
 
 // Config holds the configuration parameters
 type Config struct {
@@ -39,13 +39,14 @@ type Config struct {
 }
 
 type Blocking struct {
-	Sources     []string
-	SourceDirs  []string
-	Blocklist   []string
-	Whitelist   []string
-	NXDomain    bool
-	Nullroute   string
-	Nullroutev6 string
+	Sources      []string
+	SourcesStore string
+	SourceDirs   []string
+	Blocklist    []string
+	Whitelist    []string
+	NXDomain     bool
+	Nullroute    string
+	Nullroutev6  string
 }
 
 type Upstream struct {
@@ -146,7 +147,8 @@ followCnameDepth = 12
 		"https://gitlab.com/quidsup/notrack-blocklists/raw/master/notrack-blocklist.txt"
 	]
 	# list of locations to recursively read blocklists from (warning, every file found is assumed to be a hosts-file or domain list)
-	sourcedirs = ["sources"]
+	sourcedirs = ["./sources"]
+	sourcesStore = "./sources"
 
 
 [Upstream]

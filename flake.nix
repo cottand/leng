@@ -14,7 +14,7 @@
         packages = rec {
           leng = pkgs.buildGo121Module {
             inherit system;
-            vendorSha256 = "sha256-5dIZzqaw88lKuh1JHJurRZCPgrNzDHK/53bXKNGQBvQ=";
+            vendorHash = "sha256-5dIZzqaw88lKuh1JHJurRZCPgrNzDHK/53bXKNGQBvQ=";
             pname = "leng";
             version = "1.4.0";
             src = ./.;
@@ -35,7 +35,7 @@
 
           # shell with dependencies to build docs only
           ci-doc = with pkgs; mkShell {
-          packages = [ mdbook mdbook-mermaid ];
+            packages = [ mdbook mdbook-mermaid ];
           };
 
           default = leng;
@@ -49,5 +49,86 @@
           default = leng;
         };
 
-      }));
+      })) //
+
+    {
+      nixosModules.default = { pkgs, lib, config, ... }:
+        with lib;
+        let
+          cfg = config.services.leng;
+          toml = pkgs.formats.toml {};
+        in
+        {
+          ## interface
+          options.services.leng = {
+            enable = mkOption {
+              type = types.bool;
+              default = false;
+            };
+            enableSeaweedFsVolume = mkOption {
+              type = types.bool;
+              description = "Whether to make this nomad client capable of hosting a SeaweedFS volume";
+            };
+            package = mkOption {
+              type = types.package;
+              default = self.packages.${pkgs.system}.leng;
+            };
+            configuration = mkOption {
+              type = toml.type;
+              default = {};
+              description = "Configuration as Nix attrSet";
+              example = ''
+                {
+                  api = "127.0.0.1:8080";
+                  metrics.enabled = true;
+                  blocking.sourcesStore = "/var/lib/leng-sources";
+                }
+              '';
+            };
+
+          };
+
+          ## implementation
+          config = mkIf cfg.enable {
+            environment = {
+              etc."leng.toml".source = toml.generate "leng.toml" cfg.configuration;
+              systemPackages = [ cfg.package ];
+            };
+
+            systemd.services.leng = {
+              description = "leng";
+              wantedBy = [ "multi-user.target" ];
+              wants = [ "network-online.target" ];
+              after = [ "network-online.target" ];
+              restartTriggers = [ config.environment.etc."leng.toml".source ];
+
+              serviceConfig = {
+                DynamicUser = true;
+                ExecReload = "${pkgs.coreutils}/bin/kill -HUP $MAINPID";
+                ExecStart = "${cfg.package}/bin/leng" + " --config=/etc/leng.toml";
+                KillMode = "process";
+                KillSignal = "SIGINT";
+                Restart = "on-failure";
+                RestartSec = 2;
+                TasksMax = "infinity";
+                StateDirectory = "leng-sources";
+              };
+
+              unitConfig = {
+                StartLimitIntervalSec = 10;
+                StartLimitBurst = 3;
+              };
+            };
+            assertions = [
+              {
+                assertion = cfg.configuration.blocking.sourcesStore == "/var/lib/leng-sources";
+                message = ''
+                    `services.leng.configuration.blocking.sourcesStore` should be set to `var/lib/leng-sources`, but it is set to ${cfg.configuration.blocking.sourcesStore}.
+                '';
+              }
+            ];
+          };
+        };
+    };
 }
+

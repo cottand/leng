@@ -81,7 +81,8 @@ customdnsrecords = [
         "https://gitlab.com/quidsup/notrack-blocklists/raw/master/notrack-blocklist.txt"
     ]
     # list of locations to recursively read blocklists from (warning, every file found is assumed to be a hosts-file or domain list)
-    sourcedirs = ["sources"]
+    sourcedirs = ["./sources"]
+    sourcesStore = "./sources"
     # manual whitelist entries - comments for reference
     whitelist = [
         # "getsentry.com",
