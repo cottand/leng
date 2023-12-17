@@ -120,10 +120,12 @@
               };
             };
             assertions = [
-#              {
-#                assertion = cfg.configuration.blocking.sourcesStore == cfg.;
-#                message = "Only one of services.leng.configuration or services.leng.configurationText may be set";
-#              }
+              {
+                assertion = cfg.configuration.blocking.sourcesStore == "/var/lib/leng-sources";
+                message = ''
+                    `services.leng.configuration.blocking.sourcesStore` should be set to `var/lib/leng-sources`, but it is set to ${cfg.configuration.blocking.sourcesStore}.
+                '';
+              }
             ];
           };
         };
