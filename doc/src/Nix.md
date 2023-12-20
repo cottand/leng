@@ -10,6 +10,8 @@ You can simply run `nix run github:cottand/leng` to run latest `master`.
 
 The leng flake also exports a NixOS module for easy deployment on NixOS machines.
 
+Please refer to [Configuration](./Configuration.md) for the options you can use under `services.leng.configuration. = ...`.
+
 ### In your flake
 
 ```nix
@@ -50,7 +52,7 @@ Add the following inside your configuration.nix:
 {pkgs, lib, ... }: {
   imports = [
     # import leng module
-    (builtins.getFlake "github:cottand/leng/1.5.0").nixosModules.default 
+    (builtins.getFlake "github:cottand/leng/v1.5.0").nixosModules.default 
   ];
     
   # now you can use services.leng!
