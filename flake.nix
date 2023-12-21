@@ -14,7 +14,7 @@
         packages = rec {
           leng = pkgs.buildGo121Module {
             inherit system;
-            vendorHash = "sha256-5dIZzqaw88lKuh1JHJurRZCPgrNzDHK/53bXKNGQBvQ=";
+            vendorHash = "sha256-6igkQhfri7fIH6m7dhxezp90J5Wsk2SP+Mvs0vCu0SU=";
             pname = "leng";
             version = "1.5.0";
             src = ./.;
