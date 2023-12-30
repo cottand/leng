@@ -112,6 +112,7 @@
                 RestartSec = 2;
                 TasksMax = "infinity";
                 StateDirectory = "leng-sources";
+                AmbientCapabilities = "CAP_NET_BIND_SERVICE";
               };
 
               unitConfig = {
