@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/cottand/leng/internal/metric"
 	"github.com/pelletier/go-toml/v2"
 	"io"
 	"net/http"
@@ -36,6 +37,8 @@ func integrationTest(changeConfig func(c *Config), test func(client *dns.Client,
 
 	changeConfig(&config)
 
+	cancelMetrics := metric.Start(config.Metrics.ResetPeriodMinutes, config.Metrics.HighCardinalityEnabled)
+	defer cancelMetrics()
 	quitActivation := make(chan bool)
 	actChannel := make(chan *ActivationHandler)
 
@@ -65,6 +68,56 @@ func integrationTest(changeConfig func(c *Config), test func(client *dns.Client,
 	defer server.Stop()
 
 	test(c, testDnsHost)
+}
+
+func TestHighCardinalityMetricsOff(t *testing.T) {
+	var config *Config
+	integrationTest(
+		func(c *Config) {
+			c.CustomDNSRecords = []string{
+				"example.com.          IN  A       10.10.0.1 ",
+				"example.org.          IN  A       10.10.0.2 ",
+			}
+			c.Metrics.Enabled = true
+			c.Metrics.HighCardinalityEnabled = false
+			config = c
+		},
+		func(client *dns.Client, target string) {
+			c := new(dns.Client)
+			m := new(dns.Msg)
+
+			// make 2 request
+			m.SetQuestion(dns.Fqdn("example.com"), dns.TypeA)
+
+			_, _, err := c.Exchange(m, target)
+			if err != nil {
+				t.Fatal(err)
+			}
+			m.SetQuestion(dns.Fqdn("example.org"), dns.TypeA)
+
+			_, _, err = c.Exchange(m, target)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			metrics, err := http.Get(fmt.Sprintf("http://%s%s", config.API, config.Metrics.Path))
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer func() {
+				_ = metrics.Body.Close()
+			}()
+			body, _ := io.ReadAll(metrics.Body)
+			bodyStr := string(body)
+
+			if !strings.Contains(bodyStr, "q_name=\"\"") {
+				t.Fatalf("Expected an empty `q_name` label, but it was not in the metrics response:\n%s", bodyStr)
+			}
+			if !strings.Contains(bodyStr, "remote_ip=\"\"") {
+				t.Fatalf("Expected an empty `remote_ip` label, but it was not in the metrics response:\n%s", bodyStr)
+			}
+		},
+	)
 }
 
 func TestMultipleARecords(t *testing.T) {

@@ -103,10 +103,13 @@ customdnsrecords = [
     # cache capacity, 0 for infinite
     maxcount = 0
 
-# Prometheus metrics - enable 
+# Prometheus metrics
 [Metrics]
     enabled = false
     path = "/metrics"
+    # see https://cottand.github.io/leng/Prometheus-Metrics.html
+    highCardinalityEnabled = false
+    resetPeriodMinutes = 60
 
 [DnsOverHttpServer]
     enabled = false

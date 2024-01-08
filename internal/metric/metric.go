@@ -1,11 +1,13 @@
 package metric
 
 import (
+	"context"
 	"github.com/miekg/dns"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"net"
 	"strconv"
+	"time"
 )
 
 const (
@@ -60,33 +62,86 @@ var (
 			Name:      "doh_response_count",
 			Help:      "Successful DoH responses",
 		}, []string{"status"})
+
+	allVecMetrics = []*prometheus.CounterVec{
+		responseCounter,
+		RequestUpstreamResolveCounter,
+		RequestUpstreamDohRequest,
+		DohResponseCount,
+	}
+
+	configHighCardinality = false
 )
 
-func init() {
+func Start(resetPeriodMinutes int64, highCardinality bool) (closeChan context.CancelFunc) {
+	configHighCardinality = highCardinality
 	prometheus.MustRegister(
 		responseCounter,
 		RequestUpstreamResolveCounter,
 		RequestUpstreamDohRequest,
+		CustomDNSConfigReload,
+		DohResponseCount,
 	)
+	ctx, cancel := context.WithCancel(context.Background())
+	mark := time.Now()
+
+	go func(ctx context.Context) {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				time.Sleep(time.Duration(resetPeriodMinutes) * time.Minute)
+				if time.Now().Sub(mark) > time.Duration(resetPeriodMinutes)*time.Minute {
+					for _, m := range allVecMetrics {
+						m.Reset()
+					}
+					mark = time.Now()
+				}
+			}
+			time.Sleep(400 * time.Millisecond)
+		}
+
+	}(ctx)
+
+	return cancel
 }
 
 func ReportDNSResponse(w dns.ResponseWriter, message *dns.Msg, blocked bool) {
 	question := message.Question[0]
-	remoteHost, _, _ := net.SplitHostPort(w.RemoteAddr().String())
+	var remoteHost string
+	var qName string
+	if !configHighCardinality {
+		remoteHost = ""
+		qName = ""
+	} else {
+		remoteHost, _, _ = net.SplitHostPort(w.RemoteAddr().String())
+		qName = question.Name
+	}
 	responseCounter.With(prometheus.Labels{
 		"remote_ip": remoteHost,
 		"q_type":    dns.Type(question.Qtype).String(),
-		"q_name":    question.Name,
+		"q_name":    qName,
 		"rcode":     dns.RcodeToString[message.Rcode],
 		"blocked":   strconv.FormatBool(blocked),
 	}).Inc()
 }
+
 func ReportDNSRespond(remote net.IP, message *dns.Msg, blocked bool) {
 	question := message.Question[0]
+	var remoteHost string
+	var qName string
+	if !configHighCardinality {
+		remoteHost = ""
+		qName = ""
+	} else {
+		remoteHost = remote.String()
+		qName = question.Name
+	}
 	responseCounter.With(prometheus.Labels{
-		"remote_ip": remote.String(),
+		"remote_ip": remoteHost,
 		"q_type":    dns.Type(question.Qtype).String(),
-		"q_name":    question.Name,
+		"q_name":    qName,
 		"rcode":     dns.RcodeToString[message.Rcode],
 		"blocked":   strconv.FormatBool(blocked),
 	}).Inc()
