@@ -73,8 +73,7 @@ var (
 	configHighCardinality = false
 )
 
-func Start(resetPeriodMinutes int64, highCardinality bool) (closeChan context.CancelFunc) {
-	configHighCardinality = highCardinality
+func init() {
 	prometheus.MustRegister(
 		responseCounter,
 		RequestUpstreamResolveCounter,
@@ -82,6 +81,10 @@ func Start(resetPeriodMinutes int64, highCardinality bool) (closeChan context.Ca
 		CustomDNSConfigReload,
 		DohResponseCount,
 	)
+}
+
+func Start(resetPeriodMinutes int64, highCardinality bool) (closeChan context.CancelFunc) {
+	configHighCardinality = highCardinality
 	ctx, cancel := context.WithCancel(context.Background())
 	mark := time.Now()
 

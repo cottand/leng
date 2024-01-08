@@ -62,6 +62,9 @@ func integrationTest(changeConfig func(c *Config), test func(client *dns.Client,
 	// QuestionCache contains all queries to the dns server
 	questionCache := makeQuestionCache(config.QuestionCacheCap)
 
+	reloadChan := make(chan bool)
+	_, _ = StartAPIServer(&config, reloadChan, blockCache, questionCache)
+	defer close(reloadChan)
 	server.Run(&config, blockCache, questionCache)
 
 	time.Sleep(200 * time.Millisecond)
