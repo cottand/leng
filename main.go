@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"github.com/cottand/leng/internal/metric"
 	"golang.org/x/sys/unix"
 	"net/http"
 	"os"
@@ -59,6 +60,8 @@ func main() {
 		loggingState.cleanUp()
 	}()
 
+	cancelMetrics := metric.Start(config.Metrics.ResetPeriodMinutes, config.Metrics.HighCardinalityEnabled)
+
 	lengActive = true
 	quitActivation := make(chan bool)
 	actChannel := make(chan *ActivationHandler)
@@ -103,6 +106,7 @@ forever:
 			case os.Interrupt:
 				logger.Error("SIGINT received, stopping\n")
 				quitActivation <- true
+				cancelMetrics()
 				break forever
 			case unix.SIGHUP:
 				logger.Error("SIGHUP received: rotating logs\n")

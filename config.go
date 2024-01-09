@@ -58,8 +58,10 @@ type Upstream struct {
 }
 
 type Metrics struct {
-	Enabled bool
-	Path    string
+	Enabled                bool
+	Path                   string
+	HighCardinalityEnabled bool
+	ResetPeriodMinutes     int64
 }
 
 type DnsOverHttpServer struct {
@@ -167,6 +169,9 @@ followCnameDepth = 12
 [Metrics]
 	enabled = false
 	path = "/metrics"
+	# see https://cottand.github.io/leng/Prometheus-Metrics.html
+	highCardinalityEnabled = false
+	resetPeriodMinutes = 60
 
 [DnsOverHttpServer]
 	enabled = false
