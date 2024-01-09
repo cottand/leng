@@ -16,7 +16,7 @@
             inherit system;
             vendorHash = "sha256-6igkQhfri7fIH6m7dhxezp90J5Wsk2SP+Mvs0vCu0SU=";
             pname = "leng";
-            version = "1.5.0";
+            version = "1.5.1";
             src = ./.;
           };
           default = leng;
