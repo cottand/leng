@@ -137,7 +137,7 @@ github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
 # github.com/rogpeppe/go-internal v1.9.0
 ## explicit; go 1.17
-# github.com/ryanuber/go-glob v0.0.0-20170128012129-256dc444b735
+# github.com/ryanuber/go-glob v1.0.0
 ## explicit
 github.com/ryanuber/go-glob
 # github.com/stretchr/testify v1.8.4

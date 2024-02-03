@@ -7,7 +7,7 @@ require (
 	github.com/op/go-logging v0.0.0-20160315200505-970db520ece7
 	github.com/pelletier/go-toml/v2 v2.1.0
 	github.com/prometheus/client_golang v1.16.0
-	github.com/ryanuber/go-glob v0.0.0-20170128012129-256dc444b735
+	github.com/ryanuber/go-glob v1.0.0
 	github.com/stretchr/testify v1.8.4
 	golang.org/x/sys v0.16.0
 	gopkg.in/gin-contrib/cors.v1 v1.0.0-20170318125340-cf4846e6a636
