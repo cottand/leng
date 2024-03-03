@@ -13,10 +13,9 @@ import (
 )
 
 var (
-	configPath     string
-	forceUpdate    bool
-	lengActive     bool
-	lengActivation *ActivationHandler
+	configPath  string
+	forceUpdate bool
+	lengActive  bool
 )
 
 func reloadBlockCache(config *Config,
@@ -67,7 +66,7 @@ func main() {
 	actChannel := make(chan *ActivationHandler)
 
 	go startActivation(actChannel, quitActivation)
-	lengActivation = <-actChannel
+	_ = <-actChannel
 	close(actChannel)
 
 	server := &Server{
