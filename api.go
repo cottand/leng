@@ -221,42 +221,6 @@ func StartAPIServer(config *Config,
 		c.IndentedJSON(http.StatusOK, gin.H{"active": lengActive})
 	})
 
-	// Handle the setting of active state.
-	// Possible values for state:
-	// On
-	// Off
-	// Snooze: off for `timeout` seconds; timeout defaults to 300
-	router.PUT("/application/active", func(c *gin.Context) {
-		active := c.Query("state")
-		version := c.Query("v")
-		if version != "1" {
-			c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Illegal value for 'version'"})
-		} else {
-			switch active {
-			case "On":
-				lengActivation.set(true)
-				c.IndentedJSON(http.StatusOK, gin.H{"active": lengActive})
-			case "Off":
-				lengActivation.set(false)
-				c.IndentedJSON(http.StatusOK, gin.H{"active": lengActive})
-			case "Snooze":
-				timeoutString := c.DefaultQuery("timeout", "300")
-				timeout, err := strconv.ParseUint(timeoutString, 0, 0)
-				if err != nil {
-					c.JSON(http.StatusBadRequest, gin.H{"error": "Illegal value for 'timeout'"})
-				} else {
-					lengActivation.toggleOff(uint(timeout))
-					c.IndentedJSON(http.StatusOK, gin.H{
-						"active":  lengActive,
-						"timeout": timeout,
-					})
-				}
-			default:
-				c.JSON(http.StatusBadRequest, gin.H{"error": "Illegal value for 'state'"})
-			}
-		}
-	})
-
 	router.POST("/blocklist/update", func(c *gin.Context) {
 		c.AbortWithStatus(http.StatusOK)
 		// Send reload trigger to chan in background goroutine so does not hang
