@@ -12,7 +12,7 @@
         # Build & packaging
         ## use with `nix build`
         packages = rec {
-          leng = pkgs.buildGo121Module {
+          leng = pkgs.buildGo122Module {
             inherit system;
             vendorHash = null;
             pname = "leng";
