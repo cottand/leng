@@ -14,10 +14,10 @@ import (
 )
 
 // BuildVersion returns the build version of leng, this should be incremented every new release
-var BuildVersion = "1.5.1"
+var BuildVersion = "1.5.3"
 
 // ConfigVersion returns the version of leng, this should be incremented every time the config changes so leng presents a warning
-var ConfigVersion = "1.5.1"
+var ConfigVersion = "1.5.3"
 
 // Config holds the configuration parameters
 type Config struct {
@@ -141,7 +141,6 @@ followCnameDepth = 12
 	blocklist = []
 	# list of sources to pull blocklists from, stores them in ./sources
 	sources = [
-		"https://mirror1.malwaredomains.com/files/justdomains",
 		"https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts",
 		"https://sysctl.org/cameleon/hosts",
 		"https://s3.amazonaws.com/lists.disconnect.me/simple_tracking.txt",

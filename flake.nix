@@ -16,7 +16,7 @@
             inherit system;
             vendorHash = null;
             pname = "leng";
-            version = "1.5.1";
+            version = "1.5.3";
             src = ./.;
           };
           default = leng;
@@ -56,7 +56,7 @@
         with lib;
         let
           cfg = config.services.leng;
-          toml = pkgs.formats.toml {};
+          toml = pkgs.formats.toml { };
         in
         {
           ## interface
@@ -75,7 +75,7 @@
             };
             configuration = mkOption {
               type = toml.type;
-              default = {};
+              default = { };
               description = "Configuration as Nix attrSet";
               example = ''
                 {
@@ -124,7 +124,7 @@
               {
                 assertion = cfg.configuration.blocking.sourcesStore == "/var/lib/leng-sources";
                 message = ''
-                    `services.leng.configuration.blocking.sourcesStore` should be set to `var/lib/leng-sources`, but it is set to ${cfg.configuration.blocking.sourcesStore}.
+                  `services.leng.configuration.blocking.sourcesStore` should be set to `var/lib/leng-sources`, but it is set to ${cfg.configuration.blocking.sourcesStore}.
                 '';
               }
             ];
