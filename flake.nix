@@ -17,7 +17,7 @@
             vendorHash = null;
             pname = "leng";
             version = "1.5.3";
-            src = ./.;
+            src = nixpkgs.lib.sources.cleanSource ./.;
           };
           default = leng;
         };
@@ -49,8 +49,15 @@
           default = leng;
         };
 
-      })) //
+        checks = {
+          inherit (self.packages.${system}) leng;
+          metrics-api = pkgs.callPackage ./nixos-tests/metrics-api.nix { inherit self; };
+          systemctl-start = pkgs.callPackage ./nixos-tests/systemctl-start.nix { inherit self; };
+          custom-dns = pkgs.callPackage ./nixos-tests/custom-dns.nix { inherit self; };
+        };
 
+      }))
+    //
     {
       nixosModules.default = { pkgs, lib, config, ... }:
         with lib;
@@ -91,7 +98,7 @@
           ## implementation
           config = mkIf cfg.enable {
             environment = {
-              etc."leng.toml".source = toml.generate "leng.toml" cfg.configuration;
+              etc."leng.toml".source = { blocking.sourcesStore = "/var/lib/leng-sources";} // (toml.generate "leng.toml" cfg.configuration);
               systemPackages = [ cfg.package ];
             };
 
@@ -122,9 +129,9 @@
             };
             assertions = [
               {
-                assertion = cfg.configuration.blocking.sourcesStore == "/var/lib/leng-sources";
+                assertion = (cfg.configuration ? "blocking" && cfg.configuration.blocking ? "sourcesStore");
                 message = ''
-                  `services.leng.configuration.blocking.sourcesStore` should be set to `var/lib/leng-sources`, but it is set to ${cfg.configuration.blocking.sourcesStore}.
+                  `services.leng.configuration.blocking.sourcesStore` should be set to a directory leng can write to, but it is not set.
                 '';
               }
             ];
