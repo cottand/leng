@@ -16,7 +16,7 @@
             inherit system;
             vendorHash = null;
             pname = "leng";
-            version = "1.5.3";
+            version = "1.6.0";
             src = nixpkgs.lib.sources.cleanSource ./.;
             ldflags = [ "-s -w " ];
           };
