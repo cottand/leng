@@ -18,8 +18,10 @@
             pname = "leng";
             version = "1.6.0";
             src = nixpkgs.lib.sources.cleanSource ./.;
-            ldflags = [ "-s -w " ];
-            postInstall = ''
+            ldflags = [ "-s -w" ];
+            CGO_ENABLED = "0";
+            # upx does not support darwin
+            postInstall = if pkgs.lib.strings.hasSuffix "darwin" system then "" else ''
               cd $out/bin
               ${pkgs.upx}/bin/upx -9 -o leng.mini leng
               rm leng
