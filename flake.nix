@@ -12,12 +12,24 @@
         # Build & packaging
         ## use with `nix build`
         packages = rec {
-          leng = pkgs.buildGo122Module {
+          leng = pkgs.buildGoModule {
             inherit system;
             vendorHash = null;
             pname = "leng";
             version = "1.5.3";
             src = nixpkgs.lib.sources.cleanSource ./.;
+          };
+          leng-image = pkgs.dockerTools.buildImage {
+            name = "leng";
+            created = "now";
+            tag = "nix";
+            copyToRoot = pkgs.buildEnv {
+              name = "files";
+              paths = [ leng pkgs.cacert ];
+            };
+            config = {
+              Cmd = [ "${leng}/bin/leng" ];
+            };
           };
           default = leng;
         };
@@ -28,7 +40,7 @@
         devShells = rec {
           # main development shell
           leng = with pkgs; mkShell {
-            packages = [ fish go_1_21 mdbook ];
+            packages = [ fish go mdbook ];
             # Note that `shellHook` still uses bash syntax. This starts fish, then exists the bash shell when fish exits.
             shellHook = "fish && exit";
           };
@@ -98,7 +110,7 @@
           ## implementation
           config = mkIf cfg.enable {
             environment = {
-              etc."leng.toml".source = { blocking.sourcesStore = "/var/lib/leng-sources";} // (toml.generate "leng.toml" cfg.configuration);
+              etc."leng.toml".source = { blocking.sourcesStore = "/var/lib/leng-sources"; } // (toml.generate "leng.toml" cfg.configuration);
               systemPackages = [ cfg.package ];
             };
 
