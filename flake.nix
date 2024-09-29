@@ -19,6 +19,12 @@
             version = "1.6.0";
             src = nixpkgs.lib.sources.cleanSource ./.;
             ldflags = [ "-s -w " ];
+            postInstall = ''
+              cd $out/bin
+              ${pkgs.upx}/bin/upx -9 -o leng.mini leng
+              rm leng
+              mv leng.mini leng
+            '';
           };
           leng-container-image = pkgs.dockerTools.buildImage {
             name = "leng";
