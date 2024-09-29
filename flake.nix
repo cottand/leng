@@ -18,8 +18,9 @@
             pname = "leng";
             version = "1.5.3";
             src = nixpkgs.lib.sources.cleanSource ./.;
+            ldflags = [ "-s -w " ];
           };
-          leng-image = pkgs.dockerTools.buildImage {
+          leng-container-image = pkgs.dockerTools.buildImage {
             name = "leng";
             created = "now";
             tag = "nix";
@@ -27,9 +28,7 @@
               name = "files";
               paths = [ leng pkgs.cacert ];
             };
-            config = {
-              Cmd = [ "${leng}/bin/leng" ];
-            };
+            config.Entrypoint = [ "${leng}/bin/leng" ];
           };
           default = leng;
         };
