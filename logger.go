@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -95,6 +96,7 @@ func parseLogConfig(logConfigString string) (*logConfig, error) {
 }
 
 func createLogFile(fileName string) (*os.File, error) {
+	fileName = filepath.Clean(fileName)
 	if _, err := os.Stat(fileName); os.IsNotExist(err) {
 		if _, err := os.Create(fileName); err != nil {
 			return nil, fmt.Errorf("error creating log file '%s': %s", fileName, err)

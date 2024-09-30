@@ -16,92 +16,90 @@ env:
 
 
 jobs:
-  docker:
+  publish-nix-container:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        platform:
-          - linux/amd64
-          - linux/arm/v6
-          - linux/arm/v7
-          - linux/arm64
+        system:
+          - aarch64-linux
+          - x86_64-linux
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
-
-      - uses: actions/setup-go@v4
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2.2.0
         with:
-          go-version-file: 'go.mod'
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-        with:
-          driver-opts: |
-            image=moby/buildkit:v0.10.6
-
-      - name: Log in to the Container registry
-        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
-        with:
-          registry: ${{ env.REGISTRY }}
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v5
+      - uses: cachix/install-nix-action@v29
         with:
-          # list of Docker images to use as base name for tags
-          images: ${{ env.REGISTRY_IMAGE }}
-          tags: |
-            type=sha,enable=false
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+          extra_nix_config: |
+            extra-platforms = ${{ matrix.system }}
 
-      - name: Build and push (by digest)
-        uses: docker/build-push-action@v4
-        id: build
-        with:
-          push: true
-          context: .
-          file: docker/slim.Dockerfile
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          platforms: ${{ matrix.platform }}
-          outputs: type=image,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-      - name: Export digest
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - uses: docker/setup-qemu-action@v1
+
+      # build in parallel
+      - run: nix build .#packages.${{ matrix.system }}.leng-container-image -L
+
+      - name: Tag and push image
         run: |
+          git_sha=$(git rev-parse --short "$GITHUB_SHA")
+          label=$git_sha-${{ matrix.system }}
+
+          docker load < result
+          docker tag leng:nix ${{ env.REGISTRY_IMAGE }}:$label
+          docker push ${{ env.REGISTRY_IMAGE }}:$label
+
+          # export digest
+          docker pull ${{ env.REGISTRY_IMAGE }}:$label
+          full=$(docker image inspect ${{ env.REGISTRY_IMAGE }}:$label --format "{{index .RepoDigests 0}}")
+          digest=${full#${{ env.REGISTRY_IMAGE }}@}
           mkdir -p /tmp/digests
-          digest="${{ steps.build.outputs.digest }}"
-          touch "/tmp/digests/${digest#sha256:}"
-      - name: Upload digest
-        uses: actions/upload-artifact@v4
-        with:
-          name: digests
-          path: /tmp/digests/*
-          if-no-files-found: error
-          retention-days: 1
   merge-docker:
     runs-on: ubuntu-latest
-    needs: [docker]
+    needs: [ publish-nix-container ]
     steps:
-      - name: Download digests
-        uses: actions/download-artifact@v4
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2.2.0
         with:
-          name: digests
-          path: /tmp/digests
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to the Container registry
-        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: digest for x86
+        run: |
+          system=x86_64-linux
+          git_sha=${GITHUB_SHA::7}
+          label="${git_sha}-${system}"
+
+          # export digest x86
+          docker pull ${{ env.REGISTRY_IMAGE }}:$label
+          full=$(docker image inspect ${{ env.REGISTRY_IMAGE }}:$label --format "{{index .RepoDigests 0}}")
+          digest=${full#${{ env.REGISTRY_IMAGE }}@}
+          mkdir -p /tmp/digests
+          touch "/tmp/digests/${digest#sha256:}"
+
+      - name: digest for aarch64
+        run: |
+          system=aarch64-linux
+          git_sha=${GITHUB_SHA::7}
+          label="${git_sha}-${system}"
+
+          # export digest x86
+          docker pull ${{ env.REGISTRY_IMAGE }}:$label
+          full=$(docker image inspect ${{ env.REGISTRY_IMAGE }}:$label --format "{{index .RepoDigests 0}}")
+          digest=${full#${{ env.REGISTRY_IMAGE }}@}
+          mkdir -p /tmp/digests
+          touch "/tmp/digests/${digest#sha256:}"
 
       - name: Docker meta
         id: meta
@@ -110,19 +108,14 @@ jobs:
           # list of Docker images to use as base name for tags
           images: ${{ env.REGISTRY_IMAGE }}
           tags: |
-            type=schedule
-            # tag event
-            type=ref,event=tag
-            type=sha,event=tag
-            # pull request event
-            type=sha,event=pr
-          
+            type=sha,event=push
 
       - name: Create manifest list and push
         working-directory: /tmp/digests
         run: |
           docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
             $(printf '${{ env.REGISTRY_IMAGE }}@sha256:%s ' *)
+
       - name: Inspect image
         run: |
           docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:${{ steps.meta.outputs.version }}          
