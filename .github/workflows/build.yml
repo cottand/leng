@@ -108,7 +108,11 @@ jobs:
           # list of Docker images to use as base name for tags
           images: ${{ env.REGISTRY_IMAGE }}
           tags: |
-            type=sha,event=push
+            # tag event
+            type=ref,event=tag
+            type=sha,event=tag
+            # pull request event
+            type=sha,event=pr
 
       - name: Create manifest list and push
         working-directory: /tmp/digests
