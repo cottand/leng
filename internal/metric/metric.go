@@ -36,6 +36,14 @@ var (
 			Help:      "Served DNS replies",
 		}, []string{"q_type", "remote_ip", "q_name", "rcode", "blocked"})
 
+	cachedResponseCounter = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Namespace: Namespace,
+			Name:      "request_cached",
+			Help:      "Cached DNS replies",
+		},
+	)
+
 	RequestUpstreamResolveCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: Namespace,
@@ -130,7 +138,7 @@ func ReportDNSResponse(w dns.ResponseWriter, message *dns.Msg, blocked bool) {
 	}).Inc()
 }
 
-func ReportDNSRespond(remote net.IP, message *dns.Msg, blocked bool) {
+func ReportDNSRespond(remote net.IP, message *dns.Msg, blocked bool, cached bool) {
 	question := message.Question[0]
 	var remoteHost string
 	var qName string
@@ -148,4 +156,7 @@ func ReportDNSRespond(remote net.IP, message *dns.Msg, blocked bool) {
 		"rcode":     dns.RcodeToString[message.Rcode],
 		"blocked":   strconv.FormatBool(blocked),
 	}).Inc()
+	if cached {
+		cachedResponseCounter.Inc()
+	}
 }

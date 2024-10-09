@@ -147,7 +147,7 @@ func (h *EventLoop) responseFor(Net string, req *dns.Msg, _local net.Addr, _remo
 				msg := *mesg
 				msg.Id = req.Id
 
-				defer metric.ReportDNSRespond(remote, &msg, blocked)
+				defer metric.ReportDNSRespond(remote, &msg, blocked, true)
 				return &msg, true
 			}
 		}
@@ -190,7 +190,7 @@ func (h *EventLoop) responseFor(Net string, req *dns.Msg, _local net.Addr, _remo
 				}
 			}
 
-			defer metric.ReportDNSRespond(remote, m, true)
+			defer metric.ReportDNSRespond(remote, m, true, false)
 
 			logger.Noticef("%s found in blocklist\n", Q.Qname)
 
@@ -252,7 +252,7 @@ func (h *EventLoop) responseFor(Net string, req *dns.Msg, _local net.Addr, _remo
 		}
 	}
 
-	defer metric.ReportDNSRespond(remote, mesg, false)
+	defer metric.ReportDNSRespond(remote, mesg, false, false)
 
 	if IPQuery > 0 && len(mesg.Answer) > 0 {
 		if !lengActive && blacklisted {
@@ -270,9 +270,7 @@ func (h *EventLoop) responseFor(Net string, req *dns.Msg, _local net.Addr, _remo
 
 func (h *EventLoop) doRequest(Net string, w dns.ResponseWriter, req *dns.Msg) {
 	defer func(w dns.ResponseWriter) {
-		err := w.Close()
-		if err != nil {
-		}
+		_ = w.Close()
 	}(w)
 
 	resp, ok := h.responseFor(Net, req, w.LocalAddr(), w.RemoteAddr())

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"net"
 	"net/http"
@@ -234,7 +235,7 @@ func StartAPIServer(config *Config,
 		return nil, err
 	}
 	go func() {
-		if err := server.Serve(listener); err != http.ErrServerClosed {
+		if err := server.Serve(listener); !errors.Is(err, http.ErrServerClosed) {
 			logger.Fatal(err)
 		}
 	}()
