@@ -88,6 +88,7 @@ func init() {
 		RequestUpstreamDohRequest,
 		CustomDNSConfigReload,
 		DohResponseCount,
+		cachedResponseCounter,
 	)
 }
 
