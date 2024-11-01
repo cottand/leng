@@ -225,6 +225,8 @@ func (h *EventLoop) responseFor(Net string, req *dns.Msg, _local net.Addr, _remo
 		return nil, false
 	}
 
+	// if we were doing DNS over UDP, and we got a truncated response,
+	// we retry in TCP in hopes that we do not get a truncated one again.
 	if mesg.Truncated && Net == "udp" {
 		mesg, err = h.resolver.Lookup("tcp", req, h.config.Timeout, h.config.Interval, h.config.Upstream.Nameservers, h.config.Upstream.DoH)
 		if err != nil {
