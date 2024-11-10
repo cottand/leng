@@ -62,6 +62,7 @@ type Metrics struct {
 	Path                   string
 	HighCardinalityEnabled bool
 	ResetPeriodMinutes     int64
+	HistogramsEnabled      bool
 }
 
 type DnsOverHttpServer struct {
@@ -111,6 +112,9 @@ interval = 200
 
 # question cache capacity, 0 for infinite but not recommended (this is used for storing logs)
 questioncachecap = 5000
+
+# timeout for upstream DNS queries, in ms
+timeout = 5000
 
 # manual whitelist entries - comments for reference
 whitelist = [
@@ -170,6 +174,7 @@ followCnameDepth = 12
 	path = "/metrics"
 	# see https://cottand.github.io/leng/Prometheus-Metrics.html
 	highCardinalityEnabled = false
+    histogramsEnabled = false
 	resetPeriodMinutes = 60
 
 [DnsOverHttpServer]

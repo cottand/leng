@@ -40,7 +40,7 @@ type Resolver struct {
 // Lookup will ask each nameserver in top-to-bottom fashion, starting a new request
 // in every second, and return as early as possible (have an answer).
 // It returns an error if no request has succeeded.
-func (r *Resolver) Lookup(net string, req *dns.Msg, timeout int, interval int, nameServers []string, DoH string) (message *dns.Msg, err error) {
+func (resolver *Resolver) Lookup(net string, req *dns.Msg, timeout int, interval int, nameServers []string, DoH string) (message *dns.Msg, err error) {
 	logger.Debugf("Lookup %s, timeout: %d, interval: %d, nameservers: %v, Using DoH: %v", net, timeout, interval, nameServers, DoH != "")
 
 	question := req.Question[0]
@@ -50,10 +50,13 @@ func (r *Resolver) Lookup(net string, req *dns.Msg, timeout int, interval int, n
 		"q_name": question.Name,
 	})
 
+	mark := time.Now()
+
 	//Is DoH enabled
 	if DoH != "" {
 		//First try and use DOH. Privacy First
-		ans, err := r.DoHLookup(DoH, timeout, req)
+		ans, err := resolver.DoHLookup(DoH, timeout, req)
+		metric.ReportUpstreamResolve("doh", time.Since(mark))
 		if err == nil {
 			// No error so result is ok
 			metricUpstreamResolveCounter.With(
@@ -129,6 +132,7 @@ func (r *Resolver) Lookup(net string, req *dns.Msg, timeout int, interval int, n
 			"rcode":    dns.RcodeToString[r.answer.Rcode],
 			"upstream": r.nameserver,
 		}).Inc()
+		metric.ReportUpstreamResolve(net, time.Since(mark))
 		return r.answer, nil
 	default:
 		return nil, ResolvError{qname, net, nameServers}
@@ -136,7 +140,7 @@ func (r *Resolver) Lookup(net string, req *dns.Msg, timeout int, interval int, n
 }
 
 // DoHLookup performs a DNS lookup over https
-func (r *Resolver) DoHLookup(url string, timeout int, req *dns.Msg) (msg *dns.Msg, err error) {
+func (resolver *Resolver) DoHLookup(url string, timeout int, req *dns.Msg) (msg *dns.Msg, err error) {
 	qname := req.Question[0].Name
 
 	defer func() {
