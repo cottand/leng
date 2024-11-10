@@ -59,7 +59,11 @@ func main() {
 		loggingState.cleanUp()
 	}()
 
-	cancelMetrics := metric.Start(config.Metrics.ResetPeriodMinutes, config.Metrics.HighCardinalityEnabled)
+	cancelMetrics := metric.Start(
+		config.Metrics.ResetPeriodMinutes,
+		config.Metrics.HighCardinalityEnabled,
+		config.Metrics.HistogramsEnabled,
+	)
 
 	lengActive = true
 	quitActivation := make(chan bool)

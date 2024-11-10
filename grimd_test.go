@@ -37,7 +37,7 @@ func integrationTest(changeConfig func(c *Config), test func(client *dns.Client,
 
 	changeConfig(&config)
 
-	cancelMetrics := metric.Start(config.Metrics.ResetPeriodMinutes, config.Metrics.HighCardinalityEnabled)
+	cancelMetrics := metric.Start(config.Metrics.ResetPeriodMinutes, config.Metrics.HighCardinalityEnabled, false)
 	defer cancelMetrics()
 	quitActivation := make(chan bool)
 	actChannel := make(chan *ActivationHandler)

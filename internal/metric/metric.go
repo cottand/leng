@@ -57,6 +57,16 @@ var (
 			Name:      "upstream_request_doh",
 			Help:      "Upstream DoH requests - only works when DoH configured",
 		}, []string{"success"})
+
+	RequestUpstreamResolveDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Namespace:                      Namespace,
+		Name:                           "upstream_request_duration",
+		Help:                           "Upstream requests duration in seconds, by request type",
+		Buckets:                        []float64{0.0001, 0.0025, .005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10},
+		NativeHistogramBucketFactor:    1.1,
+		NativeHistogramMaxBucketNumber: 32,
+	}, []string{"upstream_type"})
+
 	CustomDNSConfigReload = prometheus.NewCounter(
 		prometheus.CounterOpts{
 			Namespace: Namespace,
@@ -79,6 +89,7 @@ var (
 	}
 
 	configHighCardinality = false
+	configHistograms      = false
 )
 
 func init() {
@@ -92,8 +103,12 @@ func init() {
 	)
 }
 
-func Start(resetPeriodMinutes int64, highCardinality bool) (closeChan context.CancelFunc) {
+func Start(resetPeriodMinutes int64, highCardinality bool, histogramsEnabled bool) (closeChan context.CancelFunc) {
 	configHighCardinality = highCardinality
+	if histogramsEnabled {
+		prometheus.MustRegister(RequestUpstreamResolveDuration)
+		configHistograms = true
+	}
 	ctx, cancel := context.WithCancel(context.Background())
 	mark := time.Now()
 
@@ -160,4 +175,13 @@ func ReportDNSRespond(remote net.IP, message *dns.Msg, blocked bool, cached bool
 	if cached {
 		cachedResponseCounter.Inc()
 	}
+}
+
+func ReportUpstreamResolve(upstreamType string, duration time.Duration) {
+	if !configHistograms {
+		return
+	}
+	RequestUpstreamResolveDuration.
+		With(prometheus.Labels{"upstream_type": upstreamType}).
+		Observe(duration.Seconds())
 }
