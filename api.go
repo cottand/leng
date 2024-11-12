@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gopkg.in/gin-contrib/cors.v1"
@@ -48,8 +49,9 @@ func StartAPIServer(config *Config,
 	}
 
 	server := &http.Server{
-		Addr:    config.API,
-		Handler: router,
+		Addr:              config.API,
+		Handler:           router,
+		ReadHeaderTimeout: time.Duration(config.Timeout) * time.Second,
 	}
 
 	router.Use(cors.Default())

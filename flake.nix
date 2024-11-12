@@ -73,6 +73,7 @@
           metrics-api = pkgs.callPackage ./nixos-tests/metrics-api.nix { inherit self; };
           systemctl-start = pkgs.callPackage ./nixos-tests/systemctl-start.nix { inherit self; };
           custom-dns = pkgs.callPackage ./nixos-tests/custom-dns.nix { inherit self; };
+          doh-upstream = pkgs.callPackage ./nixos-tests/doh-upstream.nix { inherit self; };
         };
 
       }))
