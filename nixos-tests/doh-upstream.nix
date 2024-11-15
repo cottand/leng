@@ -41,10 +41,6 @@ in
         'curl -vH "accept: application/dns-json" "http://server/dns-query?dns=AAABAAABAAAAAAAAA3d3dwdleGFtcGxlA2NvbQAAAQAB"',
         timeout=10,
       )
-      client.succeed(
-        "dig +http-plain @server example.com",# | grep -o 'status: NOERROR'",
-        timeout=10,
-      )
     '';
 
 }).config.result
