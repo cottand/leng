@@ -15,7 +15,7 @@ in
 
       services.leng.enable = true;
       services.leng.configuration = {
-        blocking.sourcesStore="/tmp";
+        blocking.sourcesStore = "/tmp";
       };
     };
 

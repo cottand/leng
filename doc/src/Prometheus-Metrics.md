@@ -22,7 +22,7 @@ size of the `/metrics`
 response will grow to be so big the metrics stop being updated.
 While resetting the counters periodically can help
 (and you can tweak that with the config `Metrics.resetPeriodMinutes`)
-but you might still see issues depending on your traffic.
+you might still see issues depending on your traffic.
 You can
 read [this SO post](https://stackoverflow.com/questions/46373442/how-dangerous-are-high-cardinality-labels-in-prometheus)
 to learn more.
@@ -38,4 +38,18 @@ with the following config:
 enabled = true
 path = "/metrics"
 highCardinalityEnabled = true
+```
+
+## Histogram metrics
+
+Histogram metrics are not unbounded and usually will not be as high-cardinality as the metrics discussed above,
+but you should still expect them to have some impact on leng's the memory footprint.
+
+You can enable them with:
+
+```toml
+[Metrics]
+enabled = true
+path = "/metrics"
+histogramsEnabled = true
 ```

@@ -109,6 +109,7 @@ customdnsrecords = [
     path = "/metrics"
     # see https://cottand.github.io/leng/Prometheus-Metrics.html
     highCardinalityEnabled = false
+    histogramsEnabled = false
     resetPeriodMinutes = 60
 
 [DnsOverHttpServer]
