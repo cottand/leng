@@ -68,6 +68,16 @@ Add the following inside your configuration.nix:
 }
 ```
 
+### Using leng for local DNS
+
+If you want to use leng to resolve the DNS queries of the machine you are installing it on, you should
+also add it to the local nameservers:
+
+```nix
+networking.nameservers = [ "127.0.0.1" ];
+```
+
+
 ## Developing
 
 The flake's development shell simply includes Go 1.21+ and a [fish](https://fishshell.com/) shell. You can enter it with `nix develop`.
