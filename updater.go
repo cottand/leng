@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -105,6 +106,7 @@ func updateBlockCache(blockCache *MemoryBlockCache, sourceDirs []string) error {
 	logger.Debugf("loading blocked domains from %d locations...\n", len(sourceDirs))
 
 	for _, dir := range sourceDirs {
+		dir = filepath.Clean(dir)
 		if _, err := os.Stat(dir); os.IsNotExist(err) {
 			logger.Errorf("directory %s not found, skipping\n", dir)
 			continue
@@ -133,7 +135,7 @@ func updateBlockCache(blockCache *MemoryBlockCache, sourceDirs []string) error {
 }
 
 func parseHostFile(fileName string, blockCache *MemoryBlockCache) error {
-	file, err := os.Open(fileName)
+	file, err := os.Open(path.Clean(fileName))
 	if err != nil {
 		return fmt.Errorf("error opening file: %s", err)
 	}
