@@ -22,13 +22,9 @@ type Server struct {
 }
 
 // Run starts the server
-func (s *Server) Run(
-	config *Config,
-	blockCache *MemoryBlockCache,
-	questionCache *MemoryQuestionCache,
-) {
+func (s *Server) Run(config *Config, blockCache *MemoryBlockCache) {
 
-	s.eventLoop = NewEventLoop(config, blockCache, questionCache)
+	s.eventLoop = NewEventLoop(config, blockCache)
 
 	tcpHandler := dns.NewServeMux()
 	tcpHandler.HandleFunc(".", s.eventLoop.DoTCP)

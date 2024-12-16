@@ -7,10 +7,6 @@ func makeCache() MemoryCache {
 	}
 }
 
-func makeQuestionCache(maxCount int) *MemoryQuestionCache {
-	return &MemoryQuestionCache{Backend: make([]QuestionCacheEntry, 0), Maxcount: maxCount}
-}
-
 // Difference between to lists: A - B
 func difference[T comparable](a, b []T) (diff []T) {
 	m := make(map[T]bool)

@@ -2,12 +2,10 @@ package main
 
 import (
 	"github.com/cottand/leng/internal/metric"
+	"github.com/miekg/dns"
 	"net"
 	"slices"
 	"sync"
-	"time"
-
-	"github.com/miekg/dns"
 )
 
 const (
@@ -42,13 +40,12 @@ type EventLoop struct {
 	resolver       *Resolver
 	cache          Cache
 	// negCache caches failures
-	negCache      Cache
-	active        bool
-	muActive      sync.RWMutex
-	config        *Config
-	blockCache    *MemoryBlockCache
-	questionCache *MemoryQuestionCache
-	customDns     *CustomRecordsResolver
+	negCache   Cache
+	active     bool
+	muActive   sync.RWMutex
+	config     *Config
+	blockCache *MemoryBlockCache
+	customDns  *CustomRecordsResolver
 }
 
 // DNSOperationData type
@@ -59,7 +56,7 @@ type DNSOperationData struct {
 }
 
 // NewEventLoop returns a new eventLoop
-func NewEventLoop(config *Config, blockCache *MemoryBlockCache, questionCache *MemoryQuestionCache) *EventLoop {
+func NewEventLoop(config *Config, blockCache *MemoryBlockCache) *EventLoop {
 	var (
 		clientConfig *dns.ClientConfig
 		resolver     *Resolver
@@ -84,7 +81,6 @@ func NewEventLoop(config *Config, blockCache *MemoryBlockCache, questionCache *M
 		cache:          cache,
 		negCache:       negCache,
 		blockCache:     blockCache,
-		questionCache:  questionCache,
 		active:         true,
 		config:         config,
 		customDns:      NewCustomRecordsResolver(NewCustomDNSRecordsFromText(config.CustomDNSRecords)),
@@ -194,10 +190,6 @@ func (h *EventLoop) responseFor(Net string, req *dns.Msg, _local net.Addr, _remo
 
 			logger.Noticef("%s found in blocklist\n", Q.Qname)
 
-			// log query
-			NewEntry := QuestionCacheEntry{Date: time.Now().Unix(), Remote: remote.String(), Query: Q, Blocked: true}
-			go h.questionCache.Add(NewEntry)
-
 			// cache the block; we don't know the true TTL for blocked entries: we just enforce our config
 			err := h.cache.Set(key, m, true)
 			if err != nil {
@@ -208,10 +200,6 @@ func (h *EventLoop) responseFor(Net string, req *dns.Msg, _local net.Addr, _remo
 		}
 		logger.Debugf("%s not found in blocklist\n", Q.Qname)
 	}
-
-	// log query
-	NewEntry := QuestionCacheEntry{Date: time.Now().Unix(), Remote: remote.String(), Query: Q, Blocked: false}
-	go h.questionCache.Add(NewEntry)
 
 	mesg, err := h.resolver.Lookup(Net, req, h.config.Timeout, h.config.Interval, h.config.Upstream.Nameservers, h.config.Upstream.DoH)
 

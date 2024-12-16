@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
@@ -30,10 +29,7 @@ func isRunningInDockerContainer() bool {
 }
 
 // StartAPIServer starts the API server
-func StartAPIServer(config *Config,
-	reloadChan chan bool,
-	blockCache *MemoryBlockCache,
-	questionCache *MemoryQuestionCache) (*http.Server, error) {
+func StartAPIServer(config *Config, reloadChan chan bool, blockCache *MemoryBlockCache) (*http.Server, error) {
 	if !config.APIDebug {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -164,56 +160,6 @@ func StartAPIServer(config *Config,
 				logger.Error(err)
 			}
 		}
-	})
-
-	router.GET("/questioncache", func(c *gin.Context) {
-		highWater, err := strconv.ParseInt(c.DefaultQuery("highWater", "-1"), 10, 64)
-		if err != nil {
-			highWater = -1
-		}
-		c.IndentedJSON(http.StatusOK, gin.H{
-			"length": questionCache.Length(),
-			"items":  questionCache.GetOlder(highWater),
-		})
-	})
-
-	router.GET("/questioncache/length", func(c *gin.Context) {
-		c.IndentedJSON(http.StatusOK, gin.H{"length": questionCache.Length()})
-	})
-
-	router.GET("/questioncache/clear", func(c *gin.Context) {
-		questionCache.Clear()
-		c.IndentedJSON(http.StatusOK, gin.H{"success": true})
-	})
-
-	router.GET("/questioncache/client/:client", func(c *gin.Context) {
-		var filteredCache []QuestionCacheEntry
-
-		questionCache.mu.RLock()
-		for _, entry := range questionCache.Backend {
-			if entry.Remote == c.Param("client") {
-				filteredCache = append(filteredCache, entry)
-			}
-		}
-		questionCache.mu.RUnlock()
-
-		c.IndentedJSON(http.StatusOK, filteredCache)
-	})
-
-	router.GET("/questioncache/client", func(c *gin.Context) {
-		clientList := make(map[string]bool)
-		questionCache.mu.RLock()
-		for _, entry := range questionCache.Backend {
-			if _, ok := clientList[entry.Remote]; !ok {
-				clientList[entry.Remote] = true
-			}
-		}
-		questionCache.mu.RUnlock()
-		var clients []string
-		for client := range clientList {
-			clients = append(clients, client)
-		}
-		c.IndentedJSON(http.StatusOK, clients)
 	})
 
 	router.OPTIONS("/application/active", func(c *gin.Context) {
