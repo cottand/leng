@@ -106,13 +106,15 @@ func TestCacheTtl(t *testing.T) {
 
 	msg, _, err := cache.Get(testDomain)
 	assert.Nil(t, err)
+	assert.NotNil(t, msg)
 
 	for _, answer := range msg.Answer {
 		switch answer.Header().Rrtype {
 		case dns.TypeA:
 			assert.Equal(t, attl, answer.Header().Ttl, "TTL should be unchanged")
 		case dns.TypeAAAA:
-			assert.Equal(t, aaaattl, answer.Header().Ttl, "TTL should be unchanged")
+			// AAAA now gets the TTL of A because it is smaller
+			assert.Equal(t, attl, answer.Header().Ttl, "TTL should be unchanged")
 		default:
 			t.Error("Unexpected RR type")
 		}
@@ -127,7 +129,7 @@ func TestCacheTtl(t *testing.T) {
 		case dns.TypeA:
 			assert.Equal(t, attl-5, answer.Header().Ttl, "TTL should be decreased")
 		case dns.TypeAAAA:
-			assert.Equal(t, aaaattl-5, answer.Header().Ttl, "TTL should be decreased")
+			assert.Equal(t, attl-5, answer.Header().Ttl, "TTL should be decreased")
 		default:
 			t.Error("Unexpected RR type")
 		}
@@ -142,7 +144,7 @@ func TestCacheTtl(t *testing.T) {
 		case dns.TypeA:
 			assert.Equal(t, uint32(0), answer.Header().Ttl, "TTL should be zero")
 		case dns.TypeAAAA:
-			assert.Equal(t, aaaattl-10, answer.Header().Ttl, "TTL should be decreased")
+			assert.Equal(t, attl-10, answer.Header().Ttl, "TTL should be decreased")
 		default:
 			t.Error("Unexpected RR type")
 		}
@@ -157,7 +159,8 @@ func TestCacheTtl(t *testing.T) {
 		t.Error(err)
 	}
 
-	// accessing an expired key will remove it from the cache
+	// accessing an expired key will remove it from the cache, but not straight away
+	time.Sleep(1 * time.Millisecond) // allow the coro that removes the entry to run
 	_, _, err = cache.Get(testDomain)
 
 	var keyNotFound KeyNotFound
@@ -178,35 +181,51 @@ func TestExpirationRace(t *testing.T) {
 	m.SetQuestion(dns.Fqdn(testDomain), dns.TypeA)
 
 	nullroute := net.ParseIP("0.0.0.0")
-	a := &dns.A{
+	a := dns.A{
 		Hdr: dns.RR_Header{
 			Name:   testDomain,
 			Rrtype: dns.TypeA,
 			Class:  dns.ClassINET,
 			Ttl:    1,
 		},
-		A: nullroute}
-	m.Answer = append(m.Answer, a)
+		A: nullroute,
+	}
+	m.Answer = append(m.Answer, &a)
 
 	if err := cache.Set(testDomain, m, true); err != nil {
 		t.Error(err)
 	}
 
-	for i := 0; i < 1000; i++ {
+	count := 10_000
+
+	for i := 0; i < count; i++ {
 		fakeClock.Advance(time.Duration(100) * time.Millisecond)
 		wg := &sync.WaitGroup{}
 		wg.Add(2)
 		go func() {
+			defer wg.Done()
 			_, _, err := cache.Get(testDomain)
-			wg.Done()
-			if err != nil && errors.Is(err, &KeyNotFound{}) {
+			if err != nil && !errors.Is(err, KeyNotFound{}) {
 				t.Error(err)
 			}
 		}()
 		go func() {
+			defer wg.Done()
+			newA := dns.A{
+				Hdr: dns.RR_Header{
+					Name:   testDomain,
+					Rrtype: dns.TypeA,
+					Class:  dns.ClassINET,
+					Ttl:    1,
+				},
+				A: nullroute,
+			}
+			m := new(dns.Msg)
+			m.SetQuestion(dns.Fqdn(testDomain), dns.TypeA)
+			m.Answer = append(m.Answer, &newA)
+
 			err := cache.Set(testDomain, m, true)
-			wg.Done()
-			if err != nil {
+			if err != nil && !errors.Is(err, KeyNotFound{}) {
 				t.Error(err)
 			}
 		}()

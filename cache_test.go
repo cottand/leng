@@ -1,10 +1,12 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"regexp"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -250,8 +252,8 @@ func TestCacheTtlFrequentPolling(t *testing.T) {
 
 }
 
-/*
 func TestExpirationRace(t *testing.T) {
+	t.Skip()
 	cache := makeCache()
 	fakeClock := clockwork.NewFakeClock()
 	WallClock = fakeClock
@@ -279,22 +281,25 @@ func TestExpirationRace(t *testing.T) {
 	}
 
 	for i := 0; i < 1000; i++ {
+		wg := &sync.WaitGroup{}
+		wg.Add(2)
 		fakeClock.Advance(time.Duration(100) * time.Millisecond)
 		go func() {
 			_, _, err := cache.Get(testDomain)
-			if err != nil {
+			if err != nil && !errors.Is(err, &KeyNotFound{}) {
 				t.Error(err)
 			}
+			wg.Done()
 		}()
 		go func() {
 			err := cache.Set(testDomain, m, true)
 			if err != nil {
 				t.Error(err)
 			}
+			wg.Done()
 		}()
 	}
 }
-*/
 
 func BenchmarkSetCache(b *testing.B) {
 	cache := makeCache()
@@ -311,7 +316,7 @@ func BenchmarkSetCache(b *testing.B) {
 	}
 }
 
-func BenchmarkGetCache(b *testing.B) {
+func BenchmarkGetCacheSingleDomain(b *testing.B) {
 	cache := makeCache()
 
 	m := new(dns.Msg)

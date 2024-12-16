@@ -4,6 +4,7 @@ import (
 	"github.com/jonboulle/clockwork"
 	"github.com/miekg/dns"
 	"github.com/op/go-logging"
+	"math"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -15,11 +16,12 @@ var logger = logging.MustGetLogger("test")
 // wallClock is the wall clock
 var wallClock = clockwork.NewRealClock()
 
-// Mesg represents a cache entry
-type Mesg struct {
-	Msg            *dns.Msg
-	Blocked        bool
-	LastUpdateTime time.Time
+// entry represents a cache entry
+type entry struct {
+	Msg       *dns.Msg
+	Blocked   bool
+	expiresAt time.Time
+	mu        sync.Mutex
 }
 
 // Cache interface
@@ -33,7 +35,7 @@ type Cache interface {
 }
 
 type lengCache struct {
-	backend sync.Map // of string -> *Mesg
+	backend sync.Map // of string -> *entry
 	size    atomic.Int64
 	full    bool
 	maxSize int64
@@ -50,38 +52,49 @@ func New(maxSize int64) Cache {
 func (c *lengCache) Get(key string) (Msg *dns.Msg, blocked bool, err error) {
 	key = strings.ToLower(key)
 
-	//Truncate time to the second, so that subsecond queries won't keep moving
-	//forward the last update time without touching the TTL
-	expired := false
 	existing, ok := c.backend.Load(key)
 	if !ok {
 		logger.Debugf("Cache: Cannot find key %s\n", key)
 		return nil, false, KeyNotFound{key}
 	}
-	mesg := existing.(*Mesg)
-	now := wallClock.Now().Truncate(time.Second)
-	defer func() {
-		mesg.LastUpdateTime = now
-	}()
+	mesg := existing.(*entry)
 	if mesg.Msg == nil {
 		return nil, mesg.Blocked, nil
 	}
+	mesg.mu.Lock()
+	defer mesg.mu.Unlock()
+	now := wallClock.Now()
 
-	elapsed := uint32(now.Sub(mesg.LastUpdateTime).Seconds())
-	for _, answer := range mesg.Msg.Answer {
-		if elapsed > answer.Header().Ttl {
-			logger.Debugf("Cache: Key expired %s", key)
-			c.Remove(key)
-			expired = true
-		}
-		answer.Header().Ttl -= elapsed
-	}
-
-	if expired {
+	// entry expired!
+	if now.After(mesg.expiresAt) {
+		c.Remove(key)
 		return nil, false, KeyExpired{key}
+	}
+	newTtl := uint32(mesg.expiresAt.Sub(now).Truncate(time.Second).Seconds())
+
+	for _, answer := range mesg.Msg.Answer {
+		// this can happen concurrently (and it is a concurrent write of shared memory),
+		// but it's ok because two concurrent modifications usually have the same result
+		// when rounded to the second
+		answer.Header().Ttl = newTtl
 	}
 
 	return mesg.Msg, mesg.Blocked, nil
+}
+
+func minTtlFor(msg *dns.Msg) time.Duration {
+	if msg == nil {
+		return 0
+	}
+	// find smallest ttl
+	minTtl := uint32(math.MaxUint32)
+	for _, answer := range msg.Answer {
+		msgTtl := answer.Header().Ttl
+		if minTtl > msgTtl {
+			minTtl = msgTtl
+		}
+	}
+	return time.Duration(minTtl) * time.Second
 }
 
 func (c *lengCache) Set(key string, msg *dns.Msg, blocked bool) error {
@@ -93,7 +106,14 @@ func (c *lengCache) Set(key string, msg *dns.Msg, blocked bool) error {
 	if msg == nil {
 		logger.Debugf("Setting an empty value for key %s", key)
 	}
-	c.backend.Store(key, &Mesg{msg, blocked, wallClock.Now().Truncate(time.Second)})
+
+	now := wallClock.Now()
+	e := entry{
+		Msg:       msg,
+		Blocked:   blocked,
+		expiresAt: now.Add(minTtlFor(msg)),
+	}
+	c.backend.Store(key, &e)
 	return nil
 }
 
