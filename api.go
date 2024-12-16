@@ -162,6 +162,27 @@ func StartAPIServer(config *Config, reloadChan chan bool, blockCache *MemoryBloc
 		}
 	})
 
+	router.GET("/questioncache", func(c *gin.Context) {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "invalid request - endpoint has been deprecated"})
+	})
+
+	router.GET("/questioncache/length", func(c *gin.Context) {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "invalid request - endpoint has been deprecated"})
+	})
+
+	router.GET("/questioncache/clear", func(c *gin.Context) {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "invalid request - endpoint has been deprecated"})
+	})
+
+	router.GET("/questioncache/client/:client", func(c *gin.Context) {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "invalid request - endpoint has been deprecated"})
+	})
+
+	router.GET("/questioncache/client", func(c *gin.Context) {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "invalid request - endpoint has been deprecated"})
+
+	})
+
 	router.OPTIONS("/application/active", func(c *gin.Context) {
 		c.AbortWithStatus(http.StatusOK)
 	})
