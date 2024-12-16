@@ -52,7 +52,6 @@ func (c *lengCache) Get(key string) (Msg *dns.Msg, blocked bool, err error) {
 
 	//Truncate time to the second, so that subsecond queries won't keep moving
 	//forward the last update time without touching the TTL
-	now := wallClock.Now().Truncate(time.Second)
 	expired := false
 	existing, ok := c.backend.Load(key)
 	if !ok {
@@ -60,6 +59,7 @@ func (c *lengCache) Get(key string) (Msg *dns.Msg, blocked bool, err error) {
 		return nil, false, KeyNotFound{key}
 	}
 	mesg := existing.(*Mesg)
+	now := wallClock.Now().Truncate(time.Second)
 	defer func() {
 		mesg.LastUpdateTime = now
 	}()
