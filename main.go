@@ -18,12 +18,7 @@ var (
 	lengActive  bool
 )
 
-func reloadBlockCache(config *Config,
-	blockCache *MemoryBlockCache,
-	questionCache *MemoryQuestionCache,
-	apiServer *http.Server,
-	server *Server,
-	reloadChan chan bool) (*MemoryBlockCache, *http.Server, error) {
+func reloadBlockCache(config *Config, blockCache *MemoryBlockCache, apiServer *http.Server, server *Server, reloadChan chan bool) (*MemoryBlockCache, *http.Server, error) {
 
 	logger.Debug("Reloading the blockcache")
 	blockCache = PerformUpdate(config, true)
@@ -33,8 +28,8 @@ func reloadBlockCache(config *Config,
 			logger.Debugf("error shutting down api server: %v", err)
 		}
 	}
-	server.Run(config, blockCache, questionCache)
-	apiServer, err := StartAPIServer(config, reloadChan, blockCache, questionCache)
+	server.Run(config, blockCache)
+	apiServer, err := StartAPIServer(config, reloadChan, blockCache)
 	if err != nil {
 		logger.Fatal(err)
 		return nil, nil, err
@@ -81,18 +76,16 @@ func main() {
 
 	// BlockCache contains all blocked domains
 	blockCache := &MemoryBlockCache{Backend: make(map[string]bool)}
-	// QuestionCache contains all queries to the dns server
-	questionCache := makeQuestionCache(config.QuestionCacheCap)
 
 	reloadChan := make(chan bool)
 
 	// The server will start with an empty blockcache soe we can dowload the lists if leng is the
 	// system's dns server.
-	server.Run(config, blockCache, questionCache)
+	server.Run(config, blockCache)
 
 	var apiServer *http.Server
 	// Load the block cache, restart the server with the new context
-	blockCache, apiServer, err = reloadBlockCache(config, blockCache, questionCache, apiServer, server, reloadChan)
+	blockCache, apiServer, err = reloadBlockCache(config, blockCache, apiServer, server, reloadChan)
 
 	if err != nil {
 		logger.Fatalf("Cannot start the API server %s", err)
@@ -122,7 +115,7 @@ forever:
 				reloadConfigFromFile(server)
 			}
 		case <-reloadChan:
-			blockCache, apiServer, err = reloadBlockCache(config, blockCache, questionCache, apiServer, server, reloadChan)
+			blockCache, apiServer, err = reloadBlockCache(config, blockCache, apiServer, server, reloadChan)
 			if err != nil {
 				logger.Fatalf("Cannot start the API server %s", err)
 			}
