@@ -59,13 +59,11 @@ func integrationTest(changeConfig func(c *Config), test func(client *dns.Client,
 	for _, blocked := range config.Blocking.Blocklist {
 		_ = blockCache.Set(blocked, true)
 	}
-	// QuestionCache contains all queries to the dns server
-	questionCache := makeQuestionCache(config.QuestionCacheCap)
 
 	reloadChan := make(chan bool)
-	_, _ = StartAPIServer(&config, reloadChan, blockCache, questionCache)
+	_, _ = StartAPIServer(&config, reloadChan, blockCache)
 	defer close(reloadChan)
-	server.Run(&config, blockCache, questionCache)
+	server.Run(&config, blockCache)
 
 	time.Sleep(200 * time.Millisecond)
 	defer server.Stop()
@@ -358,10 +356,8 @@ func TestConfigReloadForCustomRecords(t *testing.T) {
 
 	// BlockCache contains all blocked domains
 	blockCache := &MemoryBlockCache{Backend: make(map[string]bool)}
-	// QuestionCache contains all queries to the dns server
-	questionCache := makeQuestionCache(config.QuestionCacheCap)
 
-	server.Run(&config, blockCache, questionCache)
+	server.Run(&config, blockCache)
 
 	time.Sleep(200 * time.Millisecond)
 	defer server.Stop()
