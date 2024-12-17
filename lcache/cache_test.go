@@ -170,6 +170,55 @@ func TestCacheTtl(t *testing.T) {
 
 }
 
+func TestCacheTtlFrequentPolling(t *testing.T) {
+	const (
+		testDomain = "www.google.com"
+	)
+
+	fakeClock := clockwork.NewFakeClock()
+	wallClock = fakeClock
+	cache := New(-1)
+
+	m := new(dns.Msg)
+	m.SetQuestion(dns.Fqdn(testDomain), dns.TypeA)
+
+	var attl uint32 = 10
+	nullroute := net.ParseIP("0.0.0.0")
+	a := &dns.A{
+		Hdr: dns.RR_Header{
+			Name:   testDomain,
+			Rrtype: dns.TypeA,
+			Class:  dns.ClassINET,
+			Ttl:    attl,
+		},
+		A: nullroute}
+	m.Answer = append(m.Answer, a)
+
+	if err := cache.Set(testDomain, m, true); err != nil {
+		t.Error(err)
+	}
+
+	msg, _, err := cache.Get(testDomain)
+	assert.Nil(t, err)
+
+	assert.Equal(t, attl, msg.Answer[0].Header().Ttl, "TTL should be unchanged")
+
+	//Poll 50 times at 100ms intervals: the TTL should go down by 5s
+	for i := 0; i < 50; i++ {
+		fakeClock.Advance(100 * time.Millisecond)
+		_, _, err := cache.Get(testDomain)
+		assert.Nil(t, err)
+	}
+
+	msg, _, err = cache.Get(testDomain)
+	assert.Nil(t, err)
+
+	assert.Equal(t, attl-5, msg.Answer[0].Header().Ttl, "TTL should be decreased")
+
+	cache.Remove(testDomain)
+
+}
+
 func TestExpirationRace(t *testing.T) {
 	cache := New(-1)
 	fakeClock := clockwork.NewFakeClock()
