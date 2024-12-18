@@ -39,6 +39,81 @@ func TestAdd(t *testing.T) {
 	}
 }
 
+func TestTrackSize(t *testing.T) {
+	cache := NewGeneric[DefaultEntry](-1)
+	wallClock = clockwork.NewFakeClock() // never advances
+
+	assert.Equal(t, 0, cache.Length())
+
+	m := DefaultEntry{}
+	m.SetQuestion(dns.Fqdn(testDomain), dns.TypeA)
+	m.Answer = []dns.RR{
+		&dns.A{Hdr: dns.RR_Header{Ttl: 10}},
+	}
+
+	if err := cache.Set(testDomain, &m); err != nil {
+		t.Error(err)
+	}
+
+	assert.Equal(t, 1, cache.Length())
+
+	if _, err := cache.Get(testDomain); err != nil {
+		t.Error(err)
+	}
+	assert.Equal(t, 1, cache.Length())
+
+	cache.Remove(testDomain)
+	if cache.Length() != 0 {
+		t.Error("cache length should be 0")
+	}
+}
+
+func TestTrackMaxSize(t *testing.T) {
+	cache := NewGeneric[DefaultEntry](2)
+	wallClock = clockwork.NewFakeClock() // never advances
+
+	assert.Equal(t, 0, cache.Length())
+
+	m := DefaultEntry{}
+	m.SetQuestion(dns.Fqdn(testDomain), dns.TypeA)
+	m.Answer = []dns.RR{
+		&dns.A{Hdr: dns.RR_Header{Ttl: 10}},
+	}
+
+	if err := cache.Set(testDomain, &m); err != nil {
+		t.Error(err)
+	}
+
+	assert.Equal(t, 1, cache.Length())
+	assert.False(t, cache.Full())
+
+	if _, err := cache.Get(testDomain); err != nil {
+		t.Error(err)
+	}
+	assert.Equal(t, 1, cache.Length())
+	assert.False(t, cache.Full())
+
+	if err := cache.Set(testDomain+"2", &m); err != nil {
+		t.Error(err)
+	}
+
+	assert.Equal(t, 2, cache.Length())
+	assert.True(t, cache.Full())
+
+	// expect failure as max size is 2
+	err := cache.Set(testDomain+"3", &m)
+	assert.ErrorAs(t, err, &CacheIsFull{})
+
+	// existing entries should be fine
+	err = cache.Set(testDomain, &m)
+	assert.NoError(t, err)
+
+	cache.Remove(testDomain)
+
+	assert.False(t, cache.Full())
+	assert.Equal(t, 1, cache.Length())
+}
+
 func TestCacheTtl(t *testing.T) {
 	fakeClock := clockwork.NewFakeClock()
 	wallClock = fakeClock
@@ -121,6 +196,8 @@ func TestCacheTtl(t *testing.T) {
 		}
 	}
 
+	assert.Equal(t, 1, cache.Length())
+
 	fakeClock.Advance(1 * time.Second)
 
 	// accessing an expired key will return KeyExpired error
@@ -133,6 +210,7 @@ func TestCacheTtl(t *testing.T) {
 	// accessing an expired key will remove it from the cache, but not straight away
 	time.Sleep(1 * time.Millisecond) // allow the coro that removes the entry to run
 	_, err = cache.Get(testDomain)
+	assert.Equal(t, 0, cache.Length())
 
 	var keyNotFound KeyNotFound
 	if !errors.As(err, &keyNotFound) {

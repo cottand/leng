@@ -40,10 +40,11 @@ type Cache[E Entry] interface {
 type lengCache[E Entry] struct {
 	backend sync.Map // of string -> lEntry, which contains a *dns.Msg
 	size    atomic.Int64
-	full    bool
 	maxSize int64
 }
 
+// NewGeneric creates a new Cache
+// maxSize <= 0 means the cache is unbounded
 func NewGeneric[E Entry](maxSize int64) Cache[E] {
 	return &lengCache[E]{
 		backend: sync.Map{},
@@ -114,7 +115,10 @@ func (c *lengCache[E]) Set(key string, entry *E) error {
 		underlying: entry,
 		expiresAt:  now.Add(minTtlFor(entry)),
 	}
-	c.backend.Store(key, e)
+	_, loaded := c.backend.Swap(key, e)
+	if !loaded {
+		c.size.Add(1)
+	}
 	return nil
 }
 
@@ -127,22 +131,15 @@ func (c *lengCache[E]) Exists(key string) bool {
 func (c *lengCache[E]) Remove(key string) {
 	_, loaded := c.backend.LoadAndDelete(key)
 	if loaded {
-		newSize := c.size.Add(-1)
-		if newSize < c.maxSize {
-			c.full = false
-		}
+		c.size.Add(-1)
 	}
 }
 
 func (c *lengCache[E]) Length() int {
 	size := c.size.Load()
-	c.full = size > c.maxSize
 	return int(size)
 }
 
 func (c *lengCache[E]) Full() bool {
-	if c.maxSize > 0 {
-		return c.full
-	}
-	return false
+	return c.maxSize > 0 && (c.size.Load() >= c.maxSize)
 }

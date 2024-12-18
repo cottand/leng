@@ -58,10 +58,7 @@ func NewEventLoop(config *Config, blockCache *MemoryBlockCache) *EventLoop {
 
 	resolver = &Resolver{clientConfig}
 
-	cache = &MemoryCache{
-		Backend:  make(map[string]*Mesg, config.Upstream.Maxcount),
-		Maxcount: config.Upstream.Maxcount,
-	}
+	//cache = lcache.NewDefault(int64(config.Upstream.Maxcount))
 	negCache = &MemoryCache{
 		Backend:  make(map[string]*Mesg),
 		Maxcount: config.Upstream.Maxcount,
