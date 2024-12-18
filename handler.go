@@ -101,12 +101,22 @@ func (h *EventLoop) responseFor(Net string, req *dns.Msg, _local net.Addr, _remo
 		return custom, true, false, true
 	}
 
-	// does not include custom DNS
-	defer metric.ReportDNSRespond(remote, resp, blocked, cached)
+	if len(req.Question) < 1 {
+		return nil, false, false, false
+	}
 
 	q := req.Question[0]
 	Q := Question{UnFqdn(q.Name), dns.TypeToString[q.Qtype], dns.ClassToString[q.Qclass]}
 	logger.Infof("%s lookup　%s\n", remote, Q.String())
+
+	defer func() {
+		if resp != nil {
+			resp.SetReply(req)
+		}
+		if resp != nil && remote != nil {
+			metric.ReportDNSRespond(remote, resp, blocked, cached)
+		}
+	}()
 
 	IPQuery := h.isIPQuery(q)
 
@@ -207,6 +217,7 @@ func (h *EventLoop) doRequest(Net string, w dns.ResponseWriter, req *dns.Msg) {
 
 	if !ok {
 		m := new(dns.Msg)
+		m.SetReply(req)
 		m.SetRcode(req, dns.RcodeServerFailure)
 		WriteReplyMsg(w, m)
 		metric.ReportDNSResponse(w, m, false)
@@ -325,7 +336,6 @@ func (h *EventLoop) isIPQuery(q dns.Question) int {
 }
 func (h *EventLoop) blockedResponseFor(req *dns.Msg, IPQuery int) *dns.Msg {
 	m := new(dns.Msg)
-	m.SetReply(req)
 	q := req.Question[0]
 
 	if h.config.Blocking.NXDomain {
