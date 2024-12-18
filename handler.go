@@ -4,6 +4,7 @@ import (
 	"github.com/cottand/leng/internal/metric"
 	"github.com/cottand/leng/lcache"
 	"github.com/miekg/dns"
+	"golang.org/x/sync/errgroup"
 	"net"
 	"slices"
 	"sync"
@@ -77,12 +78,18 @@ func NewEventLoop(config *Config, blockCache *MemoryBlockCache) *EventLoop {
 }
 
 func (h *EventLoop) do() {
+	errGroup := errgroup.Group{}
+	// arbitrary cap to limit allocation spikes
+	errGroup.SetLimit(100)
 	for {
 		data, ok := <-h.requestChannel
 		if !ok {
 			break
 		}
-		h.doRequest(data.Net, data.w, data.req)
+		errGroup.Go(func() error {
+			h.doRequest(data.Net, data.w, data.req)
+			return nil
+		})
 	}
 }
 
