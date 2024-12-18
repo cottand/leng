@@ -119,5 +119,5 @@ func (s *Server) Stop() {
 func (s *Server) ReloadConfig(config *Config) {
 	newRecords := NewCustomDNSRecordsFromText(config.CustomDNSRecords)
 	s.eventLoop.customDns = NewCustomRecordsResolver(newRecords)
-	defer metric.CustomDNSConfigReload.Inc()
+	metric.CustomDNSConfigReload.Inc()
 }
