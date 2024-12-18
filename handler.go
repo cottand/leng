@@ -21,14 +21,6 @@ type Question struct {
 	Qclass string `json:"class"`
 }
 
-// QuestionCacheEntry represents a full query from a client with metadata
-type QuestionCacheEntry struct {
-	Date    int64    `json:"date"`
-	Remote  string   `json:"client"`
-	Blocked bool     `json:"blocked"`
-	Query   Question `json:"query"`
-}
-
 // String formats a question
 func (q *Question) String() string {
 	return q.Qname + " " + q.Qclass + " " + q.Qtype
