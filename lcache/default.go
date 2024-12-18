@@ -13,6 +13,6 @@ func (dnsEntry DefaultEntry) RRs() []dns.RR {
 	return dnsEntry.Answer
 }
 
-func NewDefault(maxSize int64) Cache[DefaultEntry] {
+func NewDefault(maxSize int) Cache[DefaultEntry] {
 	return NewGeneric[DefaultEntry](maxSize)
 }

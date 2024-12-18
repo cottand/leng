@@ -45,11 +45,11 @@ type lengCache[E Entry] struct {
 
 // NewGeneric creates a new Cache
 // maxSize <= 0 means the cache is unbounded
-func NewGeneric[E Entry](maxSize int64) Cache[E] {
+func NewGeneric[E Entry](maxSize int) Cache[E] {
 	return &lengCache[E]{
 		backend: sync.Map{},
 		size:    atomic.Int64{},
-		maxSize: maxSize,
+		maxSize: int64(maxSize),
 	}
 }
 
