@@ -21,7 +21,6 @@ type entry struct {
 	Msg       *dns.Msg
 	Blocked   bool
 	expiresAt time.Time
-	mu        sync.Mutex
 }
 
 // Cache interface
@@ -61,8 +60,6 @@ func (c *lengCache) Get(key string) (Msg *dns.Msg, blocked bool, err error) {
 	if mesg.Msg == nil {
 		return nil, mesg.Blocked, nil
 	}
-	mesg.mu.Lock()
-	defer mesg.mu.Unlock()
 	now := wallClock.Now()
 
 	// entry expired!
