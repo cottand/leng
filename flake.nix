@@ -74,8 +74,7 @@
           systemctl-start = pkgs.callPackage ./nixos-tests/systemctl-start.nix { inherit self; };
           custom-dns = pkgs.callPackage ./nixos-tests/custom-dns.nix { inherit self; };
           doh-upstream = pkgs.callPackage ./nixos-tests/doh-upstream.nix { inherit self; };
-          # test fails, see https://github.com/cottand/leng/issues/75
-          #local-resolution = pkgs.callPackage ./nixos-tests/local-resolution.nix { inherit self; };
+          local-resolution = pkgs.callPackage ./nixos-tests/local-resolution.nix { inherit self; };
         };
 
       }))

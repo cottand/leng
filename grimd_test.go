@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/cottand/leng/internal/metric"
 	"github.com/pelletier/go-toml/v2"
+	"github.com/stretchr/testify/assert"
 	"io"
 	"net/http"
 	"slices"
@@ -389,14 +390,11 @@ func TestConfigReloadForCustomRecords(t *testing.T) {
 
 	m1 = new(dns.Msg)
 	m1.SetQuestion(dns.Fqdn("old.com_custom"), dns.TypeA)
+	// no caching available, so this request requires internet!
 	reply, _, err = c.Exchange(m1, testDnsHost)
-	if err != nil {
-		fmt.Printf("Err was %v - expected this", err)
-		t.FailNow()
-	}
-	if len(reply.Answer) != 0 {
-		t.Fatalf("expected old.com_custom DNS to fail, but got %v", reply)
-	}
+	// no response but no error
+	assert.NoError(t, err)
+	assert.Len(t, reply.Answer, 0)
 
 	m1 = new(dns.Msg)
 	m1.SetQuestion(dns.Fqdn("boo.org"), dns.TypeA)
@@ -409,9 +407,7 @@ func TestConfigReloadForCustomRecords(t *testing.T) {
 		t.Fatalf("Expected 1 returned records but had %v: %v", l, reply.Answer)
 	}
 
-	if !strings.Contains(reply.Answer[0].String(), "10.10.2.2") {
-		t.Fatalf("Expected the new A address to be returned, but got %v", reply.Answer[0])
-	}
+	assert.Contains(t, reply.Answer[0].String(), "10.10.2.2")
 
 	m1 = new(dns.Msg)
 	m1.SetQuestion(dns.Fqdn("new.com"), dns.TypeA)
