@@ -308,6 +308,7 @@ func (c *MemoryBlockCache) Get(key string) (bool, error) {
 // Remove removes an entry from the cache
 func (c *MemoryBlockCache) Remove(key string) {
 	c.mu.Lock()
+	defer c.mu.Unlock()
 	if strings.HasPrefix(key, "~") {
 		delete(c.Special, key)
 	} else if strings.ContainsAny(key, globChars) {
@@ -315,12 +316,12 @@ func (c *MemoryBlockCache) Remove(key string) {
 	} else {
 		delete(c.Backend, strings.ToLower(key))
 	}
-	c.mu.Unlock()
 }
 
 // Set sets a value in the BlockCache
 func (c *MemoryBlockCache) Set(key string, value bool) error {
 	c.mu.Lock()
+	defer c.mu.Unlock()
 	if strings.HasPrefix(key, "~") {
 		// get rid of the ~ prefix
 		runes := []rune(key)
@@ -336,8 +337,6 @@ func (c *MemoryBlockCache) Set(key string, value bool) error {
 	} else {
 		c.Backend[strings.ToLower(key)] = value
 	}
-	c.mu.Unlock()
-
 	return nil
 }
 
@@ -346,6 +345,7 @@ func (c *MemoryBlockCache) Exists(key string) bool {
 	key = strings.ToLower(key)
 
 	c.mu.RLock()
+	defer c.mu.RUnlock()
 	_, ok := c.Backend[key]
 	if !ok {
 		for data, regex := range c.Special {
@@ -360,7 +360,6 @@ func (c *MemoryBlockCache) Exists(key string) bool {
 			}
 		}
 	}
-	c.mu.RUnlock()
 	return ok
 }
 

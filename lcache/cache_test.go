@@ -2,12 +2,10 @@ package lcache
 
 import (
 	"errors"
-	"fmt"
 	"github.com/jonboulle/clockwork"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"net"
-	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -19,61 +17,109 @@ const (
 )
 
 func TestAdd(t *testing.T) {
-	cache := New(-1)
+
+	cache := NewGeneric[DefaultEntry](-1)
 	wallClock = clockwork.NewFakeClock()
 
-	m := new(dns.Msg)
+	m := DefaultEntry{}
 	m.SetQuestion(dns.Fqdn(testDomain), dns.TypeA)
 
-	if err := cache.Set(testDomain, m, false); err != nil {
+	if err := cache.Set(testDomain, &m); err != nil {
 		t.Error(err)
 	}
 
-	if _, _, err := cache.Get(testDomain); err != nil {
+	if _, err := cache.Get(testDomain); err != nil {
 		t.Error(err)
 	}
 
 	cache.Remove(testDomain)
 
-	if _, _, err := cache.Get(testDomain); err == nil {
+	if _, err := cache.Get(testDomain); err == nil {
 		t.Error("cache entry still existed after remove")
 	}
 }
 
-func TestBlockCache(t *testing.T) {
-	const (
-		testDomain = "www.google.com"
-	)
+func TestTrackSize(t *testing.T) {
+	cache := NewGeneric[DefaultEntry](-1)
+	wallClock = clockwork.NewFakeClock() // never advances
 
-	cache := New(-1)
+	assert.Equal(t, 0, cache.Length())
 
-	if err := cache.Set(testDomain, nil, true); err != nil {
+	m := DefaultEntry{}
+	m.SetQuestion(dns.Fqdn(testDomain), dns.TypeA)
+	m.Answer = []dns.RR{
+		&dns.A{Hdr: dns.RR_Header{Ttl: 10}},
+	}
+
+	if err := cache.Set(testDomain, &m); err != nil {
 		t.Error(err)
 	}
 
-	if exists := cache.Exists(testDomain); !exists {
-		t.Error(testDomain, "didnt exist in block cache")
+	assert.Equal(t, 1, cache.Length())
+
+	if _, err := cache.Get(testDomain); err != nil {
+		t.Error(err)
+	}
+	assert.Equal(t, 1, cache.Length())
+
+	cache.Remove(testDomain)
+	if cache.Length() != 0 {
+		t.Error("cache length should be 0")
+	}
+}
+
+func TestTrackMaxSize(t *testing.T) {
+	cache := NewGeneric[DefaultEntry](2)
+	wallClock = clockwork.NewFakeClock() // never advances
+
+	assert.Equal(t, 0, cache.Length())
+
+	m := DefaultEntry{}
+	m.SetQuestion(dns.Fqdn(testDomain), dns.TypeA)
+	m.Answer = []dns.RR{
+		&dns.A{Hdr: dns.RR_Header{Ttl: 10}},
 	}
 
-	if exists := cache.Exists(strings.ToUpper(testDomain)); !exists {
-		t.Error(strings.ToUpper(testDomain), "didnt exist in block cache")
-	}
-
-	if _, _, err := cache.Get(testDomain); err != nil {
+	if err := cache.Set(testDomain, &m); err != nil {
 		t.Error(err)
 	}
 
-	if exists := cache.Exists(fmt.Sprintf("%sfuzz", testDomain)); exists {
-		t.Error("fuzz existed in block cache")
+	assert.Equal(t, 1, cache.Length())
+	assert.False(t, cache.Full())
+
+	if _, err := cache.Get(testDomain); err != nil {
+		t.Error(err)
 	}
+	assert.Equal(t, 1, cache.Length())
+	assert.False(t, cache.Full())
+
+	if err := cache.Set(testDomain+"2", &m); err != nil {
+		t.Error(err)
+	}
+
+	assert.Equal(t, 2, cache.Length())
+	assert.True(t, cache.Full())
+
+	// expect failure as max size is 2
+	err := cache.Set(testDomain+"3", &m)
+	assert.ErrorAs(t, err, &CacheIsFull{})
+
+	// existing entries should be fine
+	err = cache.Set(testDomain, &m)
+	assert.NoError(t, err)
+
+	cache.Remove(testDomain)
+
+	assert.False(t, cache.Full())
+	assert.Equal(t, 1, cache.Length())
 }
 
 func TestCacheTtl(t *testing.T) {
 	fakeClock := clockwork.NewFakeClock()
 	wallClock = fakeClock
-	cache := New(-1)
+	cache := NewDefault(-1)
 
-	m := new(dns.Msg)
+	m := new(DefaultEntry)
 	m.SetQuestion(dns.Fqdn(testDomain), dns.TypeA)
 
 	var attl uint32 = 10
@@ -100,11 +146,11 @@ func TestCacheTtl(t *testing.T) {
 		AAAA: nullroutev6}
 	m.Answer = append(m.Answer, aaaa)
 
-	if err := cache.Set(testDomain, m, true); err != nil {
+	if err := cache.Set(testDomain, m); err != nil {
 		t.Error(err)
 	}
 
-	msg, _, err := cache.Get(testDomain)
+	msg, err := cache.Get(testDomain)
 	assert.Nil(t, err)
 	assert.NotNil(t, msg)
 
@@ -121,7 +167,7 @@ func TestCacheTtl(t *testing.T) {
 	}
 
 	fakeClock.Advance(5 * time.Second)
-	msg, _, err = cache.Get(testDomain)
+	msg, err = cache.Get(testDomain)
 	assert.Nil(t, err)
 
 	for _, answer := range msg.Answer {
@@ -136,7 +182,7 @@ func TestCacheTtl(t *testing.T) {
 	}
 
 	fakeClock.Advance(5 * time.Second)
-	_, _, err = cache.Get(testDomain)
+	_, err = cache.Get(testDomain)
 	assert.Nil(t, err)
 
 	for _, answer := range msg.Answer {
@@ -150,10 +196,12 @@ func TestCacheTtl(t *testing.T) {
 		}
 	}
 
+	assert.Equal(t, 1, cache.Length())
+
 	fakeClock.Advance(1 * time.Second)
 
 	// accessing an expired key will return KeyExpired error
-	_, _, err = cache.Get(testDomain)
+	_, err = cache.Get(testDomain)
 	var keyExpired KeyExpired
 	if !errors.As(err, &keyExpired) {
 		t.Error(err)
@@ -161,7 +209,8 @@ func TestCacheTtl(t *testing.T) {
 
 	// accessing an expired key will remove it from the cache, but not straight away
 	time.Sleep(1 * time.Millisecond) // allow the coro that removes the entry to run
-	_, _, err = cache.Get(testDomain)
+	_, err = cache.Get(testDomain)
+	assert.Equal(t, 0, cache.Length())
 
 	var keyNotFound KeyNotFound
 	if !errors.As(err, &keyNotFound) {
@@ -177,9 +226,9 @@ func TestCacheTtlFrequentPolling(t *testing.T) {
 
 	fakeClock := clockwork.NewFakeClock()
 	wallClock = fakeClock
-	cache := New(-1)
+	cache := NewDefault(-1)
 
-	m := new(dns.Msg)
+	m := new(DefaultEntry)
 	m.SetQuestion(dns.Fqdn(testDomain), dns.TypeA)
 
 	var attl uint32 = 10
@@ -194,11 +243,11 @@ func TestCacheTtlFrequentPolling(t *testing.T) {
 		A: nullroute}
 	m.Answer = append(m.Answer, a)
 
-	if err := cache.Set(testDomain, m, true); err != nil {
+	if err := cache.Set(testDomain, m); err != nil {
 		t.Error(err)
 	}
 
-	msg, _, err := cache.Get(testDomain)
+	msg, err := cache.Get(testDomain)
 	assert.Nil(t, err)
 
 	assert.Equal(t, attl, msg.Answer[0].Header().Ttl, "TTL should be unchanged")
@@ -206,11 +255,11 @@ func TestCacheTtlFrequentPolling(t *testing.T) {
 	//Poll 50 times at 100ms intervals: the TTL should go down by 5s
 	for i := 0; i < 50; i++ {
 		fakeClock.Advance(100 * time.Millisecond)
-		_, _, err := cache.Get(testDomain)
+		_, err := cache.Get(testDomain)
 		assert.Nil(t, err)
 	}
 
-	msg, _, err = cache.Get(testDomain)
+	msg, err = cache.Get(testDomain)
 	assert.Nil(t, err)
 
 	assert.Equal(t, attl-5, msg.Answer[0].Header().Ttl, "TTL should be decreased")
@@ -220,13 +269,13 @@ func TestCacheTtlFrequentPolling(t *testing.T) {
 }
 
 func TestExpirationRace(t *testing.T) {
-	cache := New(-1)
+	cache := NewDefault(-1)
 	fakeClock := clockwork.NewFakeClock()
 	wallClock = fakeClock
 
 	const testDomain = "www.domain.com"
 
-	m := new(dns.Msg)
+	m := new(DefaultEntry)
 	m.SetQuestion(dns.Fqdn(testDomain), dns.TypeA)
 
 	nullroute := net.ParseIP("0.0.0.0")
@@ -241,7 +290,7 @@ func TestExpirationRace(t *testing.T) {
 	}
 	m.Answer = append(m.Answer, &a)
 
-	if err := cache.Set(testDomain, m, true); err != nil {
+	if err := cache.Set(testDomain, m); err != nil {
 		t.Error(err)
 	}
 
@@ -253,7 +302,7 @@ func TestExpirationRace(t *testing.T) {
 		wg.Add(2)
 		go func() {
 			defer wg.Done()
-			_, _, err := cache.Get(testDomain)
+			_, err := cache.Get(testDomain)
 			if err != nil && !errors.Is(err, KeyNotFound{}) {
 				t.Error(err)
 			}
@@ -269,11 +318,11 @@ func TestExpirationRace(t *testing.T) {
 				},
 				A: nullroute,
 			}
-			m := new(dns.Msg)
+			m := new(DefaultEntry)
 			m.SetQuestion(dns.Fqdn(testDomain), dns.TypeA)
 			m.Answer = append(m.Answer, &newA)
 
-			err := cache.Set(testDomain, m, true)
+			err := cache.Set(testDomain, m)
 			if err != nil && !errors.Is(err, KeyNotFound{}) {
 				t.Error(err)
 			}
@@ -283,34 +332,34 @@ func TestExpirationRace(t *testing.T) {
 }
 
 func BenchmarkSetCache(b *testing.B) {
-	cache := New(-1)
+	cache := NewDefault(-1)
 
-	m := new(dns.Msg)
+	m := new(DefaultEntry)
 	m.SetQuestion(dns.Fqdn(testDomain), dns.TypeA)
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		if err := cache.Set(testDomain, m, false); err != nil {
+		if err := cache.Set(testDomain, m); err != nil {
 			b.Fatal(err)
 		}
 	}
 }
 
 func BenchmarkGetCache(b *testing.B) {
-	cache := New(-1)
+	cache := NewDefault(-1)
 
-	m := new(dns.Msg)
+	m := new(DefaultEntry)
 	m.SetQuestion(dns.Fqdn(testDomain), dns.TypeA)
 
-	if err := cache.Set(testDomain, m, false); err != nil {
+	if err := cache.Set(testDomain, m); err != nil {
 		b.Fatal(err)
 	}
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		if _, _, err := cache.Get(testDomain); err != nil {
+		if _, err := cache.Get(testDomain); err != nil {
 			b.Fatal(err)
 		}
 	}
