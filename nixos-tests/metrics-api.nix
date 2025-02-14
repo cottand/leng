@@ -20,11 +20,11 @@ in
       services.leng.configuration = {
         metrics.enabled = true;
         api = "0.0.0.0:${toString httpPort}";
-        blocking.sourcesStore="/tmp";
+        blocking.sourcesStore = "/tmp";
       };
     };
 
-    client = {};
+    client = { };
   };
 
   testScript =

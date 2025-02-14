@@ -7,19 +7,21 @@
 
   outputs = { self, nixpkgs, flake-utils, ... }:
     (flake-utils.lib.eachDefaultSystem (system:
-      let pkgs = import nixpkgs { inherit system; }; in {
-
+      let
+        pkgs = nixpkgs.legacyPackages.${system};
+        version = "1.7.0";
+      in
+      {
         # Build & packaging
         ## use with `nix build`
         packages = rec {
           leng = pkgs.buildGoModule {
-            inherit system;
+            inherit system version;
             vendorHash = null;
             pname = "leng";
-            version = "1.6.0";
             src = nixpkgs.lib.sources.cleanSource ./.;
-            ldflags = [ "-s -w" ];
-            CGO_ENABLED = "0";
+            ldflags = [ "-s -w" "-X main.BuildVersion=${version}" ];
+            env.CGO_ENABLED = "0";
             # upx does not support darwin
             postInstall = if pkgs.lib.strings.hasSuffix "darwin" system then "" else ''
               cd $out/bin
