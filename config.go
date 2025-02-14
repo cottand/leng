@@ -14,7 +14,7 @@ import (
 )
 
 // BuildVersion returns the build version of leng, this should be incremented every new release
-var BuildVersion = "1.6.0"
+var BuildVersion string = "dev"
 
 // ConfigVersion returns the version of leng, this should be incremented every time the config changes so leng presents a warning
 var ConfigVersion = "1.6.0"
