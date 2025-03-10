@@ -160,6 +160,30 @@
             ];
           };
         };
+
+
+      # this is a simple NixOS VM that can be used for trying out the NixOS module outside of a NixOS test
+      nixosConfigurations.aarch-darwin-leng-test = nixpkgs.lib.nixosSystem {
+        system = "aarch64-linux";
+        modules = [
+          self.nixosModules.default
+          {
+            virtualisation.vmVariant.virtualisation.graphics = false;
+            virtualisation.vmVariant.virtualisation.host.pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+            services.getty.autologinUser = "root";
+            system.stateVersion = "24.11";
+
+            services.leng = {
+              enable = true;
+              configuration = {
+                api = "127.0.0.1:8080";
+                metrics.enabled = true;
+                blocking.sourcesStore = "/var/lib/leng-sources";
+              };
+            };
+          }
+        ];
+      };
     };
 }
 

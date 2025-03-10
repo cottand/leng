@@ -11,3 +11,4 @@ leng.toml
 .DS_Store
 
 result
+*.qcow2
