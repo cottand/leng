@@ -121,7 +121,9 @@
           ## implementation
           config = mkIf cfg.enable {
             environment = {
-              etc."leng.toml".source = { blocking.sourcesStore = "/var/lib/leng-sources"; } // (toml.generate "leng.toml" cfg.configuration);
+              etc."leng.toml".source = {
+                blocking.sourcesStore = "/var/lib/leng-sources";
+              } // (toml.generate "leng.toml" cfg.configuration);
               systemPackages = [ cfg.package ];
             };
 
@@ -155,6 +157,17 @@
                 assertion = (cfg.configuration ? "blocking" && cfg.configuration.blocking ? "sourcesStore");
                 message = ''
                   `services.leng.configuration.blocking.sourcesStore` should be set to a directory leng can write to, but it is not set.
+                '';
+              }
+              {
+                assertion = (
+                  cfg.configuration ? "blocking" &&
+                  cfg.configuration.blocking ? "sourcesStore" &&
+                  cfg.configuration.blocking ? "sourcedirs" &&
+                  (builtins.elem cfg.configuration.blocking.sourcesStore cfg.configuration.blocking.sourcedirs)
+                );
+                message = ''
+                  `services.leng.configuration.blocking.sourcesStore` (value: '${cfg.configuration.blocking.sourcesStore}') should be present in `services.leng.configuration.blocking.sourcedirs`
                 '';
               }
             ];
