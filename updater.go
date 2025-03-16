@@ -10,6 +10,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 )
@@ -186,7 +187,13 @@ func PerformUpdate(config *Config, forceUpdate bool) *MemoryBlockCache {
 			logger.Fatal(err)
 		}
 	}
-	if err := updateBlockCache(newBlockCache, config.Blocking.SourceDirs); err != nil {
+	// we always want sourcesStore to be present in sourceDirs so that we use the sources we downloaded
+	// to block
+	sourceDirs := config.Blocking.SourceDirs
+	if !slices.Contains(sourceDirs, config.Blocking.SourcesStore) {
+		sourceDirs = append(sourceDirs, config.Blocking.SourcesStore)
+	}
+	if err := updateBlockCache(newBlockCache, sourceDirs); err != nil {
 		logger.Fatal(err)
 	}
 
