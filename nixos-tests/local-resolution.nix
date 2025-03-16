@@ -19,6 +19,7 @@ in
       services.leng.enable = true;
       services.leng.configuration = {
         blocking.sourcesStore = "/tmp";
+        blocking.sourcedirs = [ "/tmp" ];
         customdnsrecords = [
           "example.com    IN A   1.2.3.4"
         ];

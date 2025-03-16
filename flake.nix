@@ -77,6 +77,7 @@
           custom-dns = pkgs.callPackage ./nixos-tests/custom-dns.nix { inherit self; };
           doh-upstream = pkgs.callPackage ./nixos-tests/doh-upstream.nix { inherit self; };
           local-resolution = pkgs.callPackage ./nixos-tests/local-resolution.nix { inherit self; };
+          symlink-sourcedir = pkgs.callPackage ./nixos-tests/symlink-sourcedir.nix { inherit self; };
         };
 
       }))
