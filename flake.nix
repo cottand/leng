@@ -172,6 +172,12 @@
             virtualisation.vmVariant.virtualisation.host.pkgs = nixpkgs.legacyPackages.aarch64-darwin;
             services.getty.autologinUser = "root";
             system.stateVersion = "24.11";
+            #            fileSystems."/" = {
+            #              device = "rpool/local/root";
+            #              fsType = "zfs";
+            #            };
+            networking.nameservers = [ "127.0.0.1" ];
+
 
             services.leng = {
               enable = true;
@@ -179,6 +185,7 @@
                 api = "127.0.0.1:8080";
                 metrics.enabled = true;
                 blocking.sourcesStore = "/var/lib/leng-sources";
+                upstream.doh = "https://1.1.1.1/dns-query";
               };
             };
           }
