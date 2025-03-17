@@ -153,6 +153,8 @@ followCnameDepth = 12
 	]
 	# list of locations to recursively read blocklists from (warning, every file found is assumed to be a hosts-file or domain list)
 	sourcedirs = ["./sources"]
+
+	# location where to download blocklists into
 	sourcesStore = "./sources"
 
 

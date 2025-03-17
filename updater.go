@@ -107,12 +107,13 @@ func updateBlockCache(blockCache *MemoryBlockCache, sourceDirs []string) error {
 
 	for _, dir := range sourceDirs {
 		dir = filepath.Clean(dir)
+		dir, err := filepath.EvalSymlinks(dir)
 		if _, err := os.Stat(dir); os.IsNotExist(err) {
 			logger.Errorf("directory %s not found, skipping\n", dir)
 			continue
 		}
 
-		err := filepath.Walk(dir, func(path string, f os.FileInfo, _ error) error {
+		err = filepath.Walk(dir, func(path string, f os.FileInfo, _ error) error {
 			if !f.IsDir() {
 				fileName := filepath.FromSlash(path)
 
