@@ -19,7 +19,6 @@ in
       services.leng.enable = true;
       services.leng.configuration = {
         blocking.sourcesStore = "/tmp";
-        blocking.sourcedirs = [ "/tmp" ];
         customdnsrecords = [ ];
         upstream.DoH = "";
         DnsOverHttpServer.enabled = true;

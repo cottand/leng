@@ -15,7 +15,7 @@ in
       services.leng.enable = true;
       services.leng.configuration = {
         blocking.sourcesStore = "/var/lib/leng-sources";
-        blocking.sourcedirs = [ "/var/lib/leng-sources" ];
+        blocking.sourcedirs = [];
       };
     };
   };
