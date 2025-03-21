@@ -50,80 +50,91 @@ bind = "0.0.0.0:53"
 # address to bind to for the API server
 api = "127.0.0.1:8080"
 
-# concurrency interval for lookups in miliseconds
+# concurrency interval for lookups in milliseconds
 interval = 200
 
 # question cache capacity, 0 for infinite but not recommended (this is used for storing logs)
 questioncachecap = 5000
 
+# timeout for upstream DNS queries, in ms
+timeout = 5000
+
+# manual whitelist entries - comments for reference
+whitelist = [
+	# "getsentry.com",
+	# "www.getsentry.com"
+]
+
 # manual custom dns entries - comments for reference
 customdnsrecords = [
-    # "example.mywebsite.tld      IN A       10.0.0.1",
+    # "example.mywebsite.tld      IN A       10.0.0.1"
     # "example.other.tld          IN CNAME   wikipedia.org"
 ]
 
-[Blocking]
-    # response to blocked queries with a NXDOMAIN
-    nxdomain = false
-    # ipv4 address to forward blocked queries to
-    nullroute = "0.0.0.0"
-    # ipv6 address to forward blocked queries to
-    nullroutev6 = "0:0:0:0:0:0:0:0"
-    # manual blocklist entries
-    blocklist = []
-    # list of sources to pull blocklists from, stores them in ./sources
-    sources = [
-        "https://mirror1.malwaredomains.com/files/justdomains",
-        "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts",
-        "https://sysctl.org/cameleon/hosts",
-        "https://s3.amazonaws.com/lists.disconnect.me/simple_tracking.txt",
-        "https://s3.amazonaws.com/lists.disconnect.me/simple_ad.txt",
-        "https://gitlab.com/quidsup/notrack-blocklists/raw/master/notrack-blocklist.txt"
-    ]
-    # list of locations to recursively read blocklists from (warning, every file found is assumed to be a hosts-file or domain list)
-    sourcedirs = ["./sources"]
-    sourcesStore = "./sources"
-    # manual whitelist entries - comments for reference
-    whitelist = [
-        # "getsentry.com",
-        # "www.getsentry.com"
-    ]
+# How deep to follow chains of CNAME records
+# set to 0 to disable CNAME-following entirely
+# (anything more than 10 should be more than plenty)
+# see https://github.com/Cottand/leng/wiki/CNAME%E2%80%90following-DNS
+followCnameDepth = 12
 
+[Blocking]
+	# response to blocked queries with a NXDOMAIN
+	nxdomain = false
+	# ipv4 address to forward blocked queries to
+	nullroute = "0.0.0.0"
+	# ipv6 address to forward blocked queries to
+	nullroutev6 = "0:0:0:0:0:0:0:0"
+	# manual blocklist entries
+	blocklist = []
+	# list of sources to pull blocklists from, stores them in ./sources
+	sources = [
+		"https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts",
+		"https://sysctl.org/cameleon/hosts",
+		"https://s3.amazonaws.com/lists.disconnect.me/simple_tracking.txt",
+		"https://s3.amazonaws.com/lists.disconnect.me/simple_ad.txt",
+		"https://gitlab.com/quidsup/notrack-blocklists/raw/master/notrack-blocklist.txt"
+	]
+
+	# list of locations to recursively read blocklists from (warning, every file found is assumed to be a hosts-file or domain list)
+	# sourcesStore (see below) is always included in sourcedirs
+	sourcedirs = ["./sources"]
+	# location where to download blocklists into
+	sourcesStore = "./sources"
 
 
 [Upstream]
-    # Dns over HTTPS provider to use.
-    DoH = "https://cloudflare-dns.com/dns-query"
-    # nameservers to forward queries to
-    nameservers = ["1.1.1.1:53", "1.0.0.1:53"]
-    # query timeout for dns lookups in seconds
-    timeout_s = 5
-    # cache entry lifespan in seconds
-    expire = 600
-    # cache capacity, 0 for infinite
-    maxcount = 0
+	# Dns over HTTPS provider to use.
+	DoH = "https://cloudflare-dns.com/dns-query"
+	# nameservers to forward queries to
+	nameservers = ["1.1.1.1:53", "1.0.0.1:53"]
+	# query timeout for dns lookups in seconds
+	timeout_s = 5
+	# cache entry lifespan in seconds
+	expire = 600
+	# cache capacity, 0 for infinite
+	maxcount = 0
 
-# Prometheus metrics
+# Prometheus metrics - disabled by default
 [Metrics]
-    enabled = false
-    path = "/metrics"
-    # see https://cottand.github.io/leng/Prometheus-Metrics.html
-    highCardinalityEnabled = false
+	enabled = false
+	path = "/metrics"
+	# see https://cottand.github.io/leng/Prometheus-Metrics.html
+	highCardinalityEnabled = false
     histogramsEnabled = false
-    resetPeriodMinutes = 60
+	resetPeriodMinutes = 60
 
 [DnsOverHttpServer]
-    enabled = false
-    bind = "0.0.0.0:80"
-    timeoutMs = 5000
+	enabled = false
+	bind = "0.0.0.0:80"
+	timeoutMs = 5000
 
-# TLS config is not required for DoH if you have some proxy (ie, caddy, nginx, traefik...) manage HTTPS for you
-    [DnsOverHttpServer.TLS]
-        enabled = false
-        certPath = ""
-        keyPath = ""
-        # if empty, system CAs will be used
-        caPath = ""
+    # TLS config is not required for DoH if you have some proxy (ie, caddy, nginx, traefik...) manage HTTPS for you
+	[DnsOverHttpServer.TLS]
+		enabled = false
+		certPath = ""
+		keyPath = ""
+		# if empty, system CAs will be used
+		caPath = ""
 ```
 
 The most up-to-date version can be found on [config.go](https://github.com/Cottand/leng/blob/master/config.go)
