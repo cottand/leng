@@ -151,10 +151,11 @@ followCnameDepth = 12
 		"https://s3.amazonaws.com/lists.disconnect.me/simple_ad.txt",
 		"https://gitlab.com/quidsup/notrack-blocklists/raw/master/notrack-blocklist.txt"
 	]
+
 	# list of locations to recursively read blocklists from (warning, every file found is assumed to be a hosts-file or domain list)
 	# sourcesStore (see below) is always included in sourcedirs
-	sourcedirs = []
-	# where blocklists are downloaded to
+	sourcedirs = ["./sources"]
+	# location where to download blocklists into
 	sourcesStore = "./sources"
 
 
