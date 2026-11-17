@@ -1,4 +1,7 @@
-# leng
+# leng - 🗃️ archived
+
+
+** 🗃️ Leng has been archived - if you'd like to make changes you are welcome to fork it **
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/cottand/leng?style=flat-square)](https://goreportcard.com/report/github.com/cottand/leng)
 [![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg?style=flat-square)](http://godoc.org/github.com/cottand/leng)
